@@ -6,6 +6,7 @@ require (
 	github.com/orandin/lumberjackrus v1.0.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
+	github.com/xhit/go-simple-mail/v2 v2.10.0
 )
 
 require (
