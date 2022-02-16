@@ -35,7 +35,7 @@ var logLevels = map[string]logrus.Level{
 
 // New returns Logger with given Hook(s), which defaults to InfoLevel
 // if the logLevelEnv isn't specified appropriately.
-func New(hkoptions ...HookOption) *logrus.Logger {
+func New(hkoptions ...Option) *logrus.Logger {
 	if logger != nil {
 		return logger
 	}
@@ -55,7 +55,6 @@ func New(hkoptions ...HookOption) *logrus.Logger {
 	logger = logrus.New()
 	logger.SetLevel(logLevel)
 	logger.SetFormatter(&logrus.JSONFormatter{})
-	//logger.SetReportCaller(true)
 
 	if hkoptions != nil {
 		for _, hk := range hkoptions {
@@ -66,88 +65,105 @@ func New(hkoptions ...HookOption) *logrus.Logger {
 	return logger
 }
 
-type HookOption func(logger *logrus.Logger)
+type Option func(logger *logrus.Logger)
+
+func WithLogLevel(lvl logrus.Level) Option {
+	return func(logger *logrus.Logger) {
+		logger.SetLevel(lvl)
+	}
+}
+
+func WithFormatter(fmtr logrus.Formatter) Option {
+	return func(logger *logrus.Logger) {
+		logger.SetFormatter(fmtr)
+	}
+}
 
 // WithLFSHook adds hook for logging to the local filesystem,
 // which defaults "/tmp/abfpaas-log/" if the logDirEnv isn't specified appropriately,
 // with logrotate and a file per log level from InfoLevel
-func WithLFSHook(logger *logrus.Logger) {
-	var logDir string
+func WithLFSHook(logDir string) Option {
+	return func(logger *logrus.Logger) {
+		if logDir == "" {
+			logDir = "/tmp/abfpaas-log/"
 
-	dir, exists := os.LookupEnv(logDirEnv)
-	if exists && dir != "" {
-		if fileInfo, err := os.Stat(dir); err != nil {
-			println("Path error: ", dir)
-			os.Exit(1)
-		} else if !fileInfo.IsDir() {
-			println(dir, " is not a directory")
+			dirEnv, exists := os.LookupEnv(logDirEnv)
+			if exists && dirEnv != "" {
+				logDir = dirEnv
+			}
+		}
+
+		fileInfo, err := os.Stat(logDir)
+		if err != nil {
+			println("Path error: ", logDir)
 			os.Exit(1)
 		}
-		logDir = dir
-	} else {
-		logDir = "/tmp/abfpaas-log/"
+		if !fileInfo.IsDir() {
+			println(logDir, " is not a directory")
+			os.Exit(1)
+		}
+
+		logDir = strings.TrimRight(logDir, "/")
+
+		hook, err := lumberjackrus.NewHook(
+			&lumberjackrus.LogFile{
+				Filename:   logDir + "/general.log",
+				MaxSize:    logFileMaxSize,
+				MaxBackups: logFileMaxBackups,
+				MaxAge:     logFileMaxAge,
+				Compress:   logFileCompress,
+				LocalTime:  logFileLocalTime,
+			},
+			logrus.InfoLevel,
+			&logrus.JSONFormatter{},
+			&lumberjackrus.LogFileOpts{
+				logrus.PanicLevel: &lumberjackrus.LogFile{
+					Filename:   logDir + "/panic.log",
+					MaxSize:    logFileMaxSize,
+					MaxBackups: logFileMaxBackups,
+					MaxAge:     logFileMaxAge,
+					Compress:   logFileCompress,
+					LocalTime:  logFileLocalTime,
+				},
+				logrus.FatalLevel: &lumberjackrus.LogFile{
+					Filename:   logDir + "/fatal.log",
+					MaxSize:    logFileMaxSize,
+					MaxBackups: logFileMaxBackups,
+					MaxAge:     logFileMaxAge,
+					Compress:   logFileCompress,
+					LocalTime:  logFileLocalTime,
+				},
+				logrus.ErrorLevel: &lumberjackrus.LogFile{
+					Filename:   logDir + "/error.log",
+					MaxSize:    logFileMaxSize,
+					MaxBackups: logFileMaxBackups,
+					MaxAge:     logFileMaxAge,
+					Compress:   logFileCompress,
+					LocalTime:  logFileLocalTime,
+				},
+				logrus.WarnLevel: &lumberjackrus.LogFile{
+					Filename:   logDir + "/warn.log",
+					MaxSize:    logFileMaxSize,
+					MaxBackups: logFileMaxBackups,
+					MaxAge:     logFileMaxAge,
+					Compress:   logFileCompress,
+					LocalTime:  logFileLocalTime,
+				},
+				logrus.InfoLevel: &lumberjackrus.LogFile{
+					Filename:   logDir + "/info.log",
+					MaxSize:    logFileMaxSize,
+					MaxBackups: logFileMaxBackups,
+					MaxAge:     logFileMaxAge,
+					Compress:   logFileCompress,
+					LocalTime:  logFileLocalTime,
+				},
+			},
+		)
+
+		if err != nil {
+			println("Failed to enable hook, error: ", err.Error())
+			os.Exit(1)
+		}
+		logger.AddHook(hook)
 	}
-
-	logDir = strings.TrimRight(logDir, "/")
-
-	hook, err := lumberjackrus.NewHook(
-		&lumberjackrus.LogFile{
-			Filename:   logDir + "/general.log",
-			MaxSize:    logFileMaxSize,
-			MaxBackups: logFileMaxBackups,
-			MaxAge:     logFileMaxAge,
-			Compress:   logFileCompress,
-			LocalTime:  logFileLocalTime,
-		},
-		logrus.InfoLevel,
-		&logrus.JSONFormatter{},
-		&lumberjackrus.LogFileOpts{
-			logrus.PanicLevel: &lumberjackrus.LogFile{
-				Filename:   logDir + "/panic.log",
-				MaxSize:    logFileMaxSize,
-				MaxBackups: logFileMaxBackups,
-				MaxAge:     logFileMaxAge,
-				Compress:   logFileCompress,
-				LocalTime:  logFileLocalTime,
-			},
-			logrus.FatalLevel: &lumberjackrus.LogFile{
-				Filename:   logDir + "/fatal.log",
-				MaxSize:    logFileMaxSize,
-				MaxBackups: logFileMaxBackups,
-				MaxAge:     logFileMaxAge,
-				Compress:   logFileCompress,
-				LocalTime:  logFileLocalTime,
-			},
-			logrus.ErrorLevel: &lumberjackrus.LogFile{
-				Filename:   logDir + "/error.log",
-				MaxSize:    logFileMaxSize,
-				MaxBackups: logFileMaxBackups,
-				MaxAge:     logFileMaxAge,
-				Compress:   logFileCompress,
-				LocalTime:  logFileLocalTime,
-			},
-			logrus.WarnLevel: &lumberjackrus.LogFile{
-				Filename:   logDir + "/warn.log",
-				MaxSize:    logFileMaxSize,
-				MaxBackups: logFileMaxBackups,
-				MaxAge:     logFileMaxAge,
-				Compress:   logFileCompress,
-				LocalTime:  logFileLocalTime,
-			},
-			logrus.InfoLevel: &lumberjackrus.LogFile{
-				Filename:   logDir + "/info.log",
-				MaxSize:    logFileMaxSize,
-				MaxBackups: logFileMaxBackups,
-				MaxAge:     logFileMaxAge,
-				Compress:   logFileCompress,
-				LocalTime:  logFileLocalTime,
-			},
-		},
-	)
-
-	if err != nil {
-		println("Failed to enable hook, error: ", err.Error())
-		os.Exit(1)
-	}
-	logger.AddHook(hook)
 }
