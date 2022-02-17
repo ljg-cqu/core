@@ -7,7 +7,7 @@ import (
 )
 
 func TestSecureKey(t *testing.T) {
-	key, err := SecureKey(100)
+	key, err := SecureKey(64)
 	require.Nil(t, err)
 	fmt.Println(key)
 }
