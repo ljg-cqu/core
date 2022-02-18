@@ -67,7 +67,7 @@ func TestJWTParseAndVerifyRefreshToken(t *testing.T) {
 }
 
 func TestJWTParseAndVerifyAcessTokenTimeout(t *testing.T) {
-	accessTimeout = time.Nanosecond
+	AccessTimeout = time.Nanosecond
 	var userId, userName = "admin001", "Zealy"
 	tkpair, err := CreateTokenPair(userId, userName)
 	require.Nil(t, err)

@@ -6,9 +6,10 @@ import (
 	"github.com/ljg-cqu/core/resp"
 )
 
+// Keys to be set in gin.Context
 const (
 	CtxAccessTokenDetailKey  = "AccessTokenDetail"
-	CtxRefreshTokenDetailKey = "AccessTokenDetail"
+	CtxRefreshTokenDetailKey = "RefreshTokenDetail"
 )
 
 func ValidAccessToken() gin.HandlerFunc {

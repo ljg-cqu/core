@@ -26,8 +26,8 @@ var (
 	accessSecret  = "R53bWOY1wRDsAIRgm9hHneMWr8RIR1RuXgZSm0QMdz8dd9tFzieoUmM0K5YzC7qR"
 	refreshSecret = "lZRDjRvWeDupnpg46oAHBmXUJVKdpAzu0NFyTktif9gT1gqiHMFhYgvOh8cVq1p7"
 
-	accessTimeout  = time.Minute * 30
-	refreshTimeout = time.Hour * 24 * 7
+	AccessTimeout  = time.Minute * 30
+	RefreshTimeout = time.Hour * 24 * 7
 )
 
 type AccessTokenDetail struct {
@@ -68,9 +68,9 @@ func CreateTokenPair(userId, userName string) (*TokenPair, error) {
 		UserId:   userId,
 		UserName: userName,
 		//AccessTokenUuid:  uuid.NewString(),
-		AccessExpireAt: time.Now().Add(accessTimeout).Unix(),
+		AccessExpireAt: time.Now().Add(AccessTimeout).Unix(),
 		//RefreshTokenUuid: uuid.NewString(),
-		RefreshExpireAt: time.Now().Add(refreshTimeout).Unix(),
+		RefreshExpireAt: time.Now().Add(RefreshTimeout).Unix(),
 	}
 
 	//Creating Access Token
