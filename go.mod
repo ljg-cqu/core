@@ -7,6 +7,7 @@ require (
 	github.com/gin-contrib/requestid v0.0.3
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt/v4 v4.3.0
+	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.9
 	github.com/orandin/lumberjackrus v1.0.1
 	github.com/sirupsen/logrus v1.8.1
@@ -23,7 +24,6 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/protobuf v1.3.3 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
