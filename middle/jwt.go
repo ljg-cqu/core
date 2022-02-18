@@ -8,32 +8,32 @@ import (
 
 // Keys to be set in gin.Context
 const (
-	CtxAccessTokenDetailKey  = "AccessTokenDetail"
-	CtxRefreshTokenDetailKey = "RefreshTokenDetail"
+	CtxAccessJwtDetailKey  = "AccessJwtDetailKey"
+	CtxRefreshJwtDetailKey = "RefreshJwtDetailKey"
 )
 
-func ValidAccessToken() gin.HandlerFunc {
+func ValidAccessJwt() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenDetail, err := auth.VerifyAccessToken(c.Request)
+		tokenDetail, err := auth.VerifyAccessJwt(c.Request)
 		if err != nil {
 			resp.Err(c, resp.ErrUnauthorized.AppendMsg(err.Error()))
 			c.Abort()
 			return
 		}
-		c.Set("AccessTokenDetail", tokenDetail)
+		c.Set(CtxAccessJwtDetailKey, *tokenDetail)
 		c.Next()
 	}
 }
 
-func ValidRefreshToken() gin.HandlerFunc {
+func ValidRefreshJwt() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenDetail, err := auth.VerifyRefreshToken(c.Request)
+		tokenDetail, err := auth.VerifyRefreshJwt(c.Request)
 		if err != nil {
 			resp.Err(c, resp.ErrUnauthorized.AppendMsg(err.Error()))
 			c.Abort()
 			return
 		}
-		c.Set("RefreshTokenDetail", tokenDetail)
+		c.Set(CtxRefreshJwtDetailKey, *tokenDetail)
 		c.Next()
 	}
 }

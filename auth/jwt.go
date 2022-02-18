@@ -10,13 +10,14 @@ package auth
 
 import (
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"net/http"
 	"time"
 )
 
 const (
-	AccessTokenKey  = "Access-Token"
-	RefreshTokenKey = "Refresh-Token"
+	AccessJwtKey  = "access_jwt"
+	RefreshJwtKey = "Refresh_jwt"
 )
 
 var (
@@ -30,55 +31,55 @@ var (
 	RefreshTimeout = time.Hour * 24 * 7
 )
 
-type AccessTokenDetail struct {
+type AccessJwtDetail struct {
 	UserId   string
 	UserName string
 
-	AccessTokenStr string
+	AccessJwt string
 	//SignedMethod   string
-	//AccessTokenUuid string
+	AccessJwtUuid  string
 	AccessExpireAt time.Time
 }
 
-type RefreshTokenDetail struct {
+type RefreshJwtDetail struct {
 	UserId   string
 	UserName string
 
-	RefreshTokenStr string
+	RefreshJwt string
 	//SignedMethod     string
-	//RefreshTokenUuid string
+	RefreshJwtUuid  string
 	RefreshExpireAt time.Time
 }
 
-type TokenPair struct {
+type JwtPair struct {
 	UserId   string
 	UserName string
 
-	AccessTokenStr string
-	//AccessTokenUuid string
+	AccessJwt      string
+	AccessJwtUuid  string
 	AccessExpireAt int64
 
-	RefreshTokenStr string
-	//RefreshTokenUuid string
+	RefreshJwt      string
+	RefreshJwtUuid  string
 	RefreshExpireAt int64
 }
 
-func CreateTokenPair(userId, userName string) (*TokenPair, error) {
-	tokenPair := &TokenPair{
-		UserId:   userId,
-		UserName: userName,
-		//AccessTokenUuid:  uuid.NewString(),
-		AccessExpireAt: time.Now().Add(AccessTimeout).Unix(),
-		//RefreshTokenUuid: uuid.NewString(),
+func CreateJwtPair(userId, userName string) (*JwtPair, error) {
+	tokenPair := &JwtPair{
+		UserId:          userId,
+		UserName:        userName,
+		AccessJwtUuid:   uuid.NewString(),
+		AccessExpireAt:  time.Now().Add(AccessTimeout).Unix(),
+		RefreshJwtUuid:  uuid.NewString(),
 		RefreshExpireAt: time.Now().Add(RefreshTimeout).Unix(),
 	}
 
 	//Creating Access Token
 	accessTokenClaims := jwt.MapClaims{
-		//"access_uuid": tokenPair.AccessTokenUuid,
-		"user_id":   tokenPair.UserId,
-		"user_name": tokenPair.UserName,
-		"exp":       tokenPair.AccessExpireAt,
+		"access_uuid": tokenPair.AccessJwtUuid,
+		"user_id":     tokenPair.UserId,
+		"user_name":   tokenPair.UserName,
+		"exp":         tokenPair.AccessExpireAt,
 		//"alg":         signMethod.Alg(),
 	}
 
@@ -89,14 +90,14 @@ func CreateTokenPair(userId, userName string) (*TokenPair, error) {
 		return nil, err
 	}
 	//accessTokenStr = base64.StdEncoding.EncodeToString([]byte(accessTokenStr))
-	tokenPair.AccessTokenStr = accessTokenStr
+	tokenPair.AccessJwt = accessTokenStr
 
 	//Creating Refresh Token
 	refreshTokenClaims := jwt.MapClaims{
-		//"refresh_uuid": tokenPair.RefreshTokenUuid,
-		"user_id":   tokenPair.UserId,
-		"user_name": tokenPair.UserName,
-		"exp":       tokenPair.RefreshExpireAt,
+		"refresh_uuid": tokenPair.RefreshJwtUuid,
+		"user_id":      tokenPair.UserId,
+		"user_name":    tokenPair.UserName,
+		"exp":          tokenPair.RefreshExpireAt,
 		//"alg":          signMethod.Alg(),
 	}
 
@@ -107,13 +108,17 @@ func CreateTokenPair(userId, userName string) (*TokenPair, error) {
 		return nil, err
 	}
 	//refreshTokenStr = base64.StdEncoding.EncodeToString([]byte(refreshTokenStr))
-	tokenPair.RefreshTokenStr = refreshTokenStr
+	tokenPair.RefreshJwt = refreshTokenStr
 
 	return tokenPair, nil
 }
 
-func VerifyAccessToken(req *http.Request) (*AccessTokenDetail, error) {
-	tokenStr := req.Header.Get(AccessTokenKey)
+func VerifyAccessJwt(req *http.Request) (*AccessJwtDetail, error) {
+	tokenStr := req.Header.Get(AccessJwtKey)
+	return VerifyAccessJwtByStr(tokenStr)
+}
+
+func VerifyAccessJwtByStr(tokenStr string) (*AccessJwtDetail, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		return []byte(accessSecret), nil
 	}, jwt.WithValidMethods([]string{signMethod.Alg()}))
@@ -122,23 +127,25 @@ func VerifyAccessToken(req *http.Request) (*AccessTokenDetail, error) {
 		return nil, err
 	}
 
-	// TODO: extra token.Valid verification?
-
 	claims := token.Claims.(jwt.MapClaims)
 
-	return &AccessTokenDetail{
+	return &AccessJwtDetail{
 		UserId:   claims["user_id"].(string),
 		UserName: claims["user_name"].(string),
 
-		AccessTokenStr: tokenStr,
+		AccessJwt: tokenStr,
 		//SignedMethod:    claims["alg"].(string),
-		//AccessTokenUuid: claims["access_uuid"].(string),
+		AccessJwtUuid:  claims["access_uuid"].(string),
 		AccessExpireAt: time.Unix(int64(claims["exp"].(float64)), 0),
 	}, nil
 }
 
-func VerifyRefreshToken(req *http.Request) (*RefreshTokenDetail, error) {
-	tokenStr := req.Header.Get(RefreshTokenKey)
+func VerifyRefreshJwt(req *http.Request) (*RefreshJwtDetail, error) {
+	tokenStr := req.Header.Get(RefreshJwtKey)
+	return VerifyRefreshJwtByStr(tokenStr)
+}
+
+func VerifyRefreshJwtByStr(tokenStr string) (*RefreshJwtDetail, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		return []byte(refreshSecret), nil
 	}, jwt.WithValidMethods([]string{signMethod.Alg()}))
@@ -147,17 +154,15 @@ func VerifyRefreshToken(req *http.Request) (*RefreshTokenDetail, error) {
 		return nil, err
 	}
 
-	// TODO: extra token.Valid verification?
-
 	claims := token.Claims.(jwt.MapClaims)
 
-	return &RefreshTokenDetail{
+	return &RefreshJwtDetail{
 		UserId:   claims["user_id"].(string),
 		UserName: claims["user_name"].(string),
 
-		RefreshTokenStr: tokenStr,
+		RefreshJwt: tokenStr,
 		//SignedMethod:     claims["alg"].(string),
-		//RefreshTokenUuid: claims["refresh_uuid"].(string),
+		RefreshJwtUuid:  claims["refresh_uuid"].(string),
 		RefreshExpireAt: time.Unix(int64(claims["exp"].(float64)), 0),
 	}, nil
 }

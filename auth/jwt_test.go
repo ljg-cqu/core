@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"github.com/appleboy/gofight/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/utils"
@@ -10,9 +11,9 @@ import (
 	"time"
 )
 
-func TestJWTParseAndVerifyAcessToken(t *testing.T) {
+func TestJWTParseAndVerifyAcessJwt(t *testing.T) {
 	var userId, userName = "admin001", "Zealy"
-	tkpair, err := CreateTokenPair(userId, userName)
+	tkpair, err := CreateJwtPair(userId, userName)
 	require.Nil(t, err)
 	require.Equal(t, userId, tkpair.UserId)
 	require.Equal(t, userName, tkpair.UserName)
@@ -20,27 +21,29 @@ func TestJWTParseAndVerifyAcessToken(t *testing.T) {
 
 	e := gin.New()
 	e.POST("/", func(c *gin.Context) {
-		c.Header(AccessTokenKey, c.GetHeader(AccessTokenKey))
-		c.Header(RefreshTokenKey, c.GetHeader(RefreshTokenKey))
+		c.Header(AccessJwtKey, c.GetHeader(AccessJwtKey))
+		c.Header(RefreshJwtKey, c.GetHeader(RefreshJwtKey))
 		c.JSON(http.StatusOK, nil)
 	})
 	r := gofight.New()
 	r.POST("/").
 		SetDebug(true).
-		SetHeader(gofight.H{AccessTokenKey: tkpair.AccessTokenStr}).
+		SetHeader(gofight.H{AccessJwtKey: tkpair.AccessJwt}).
 		Run(e, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
-			accessDetail, err := VerifyAccessToken(req)
+			accessDetail, err := VerifyAccessJwt(req)
 			require.Nil(t, err)
 			require.Equal(t, accessDetail.UserId, tkpair.UserId)
 			require.Equal(t, accessDetail.UserName, tkpair.UserName)
-			require.Equal(t, accessDetail.AccessTokenStr, tkpair.AccessTokenStr)
+			require.Equal(t, accessDetail.AccessJwt, tkpair.AccessJwt)
+			require.Equal(t, accessDetail.AccessJwtUuid, tkpair.AccessJwtUuid)
+
 			utils.PrintlnAsJson("access token details:", accessDetail)
 		})
 }
 
-func TestJWTParseAndVerifyRefreshToken(t *testing.T) {
+func TestJWTParseAndVerifyRefreshJwt(t *testing.T) {
 	var userId, userName = "admin001", "Zealy"
-	tkpair, err := CreateTokenPair(userId, userName)
+	tkpair, err := CreateJwtPair(userId, userName)
 	require.Nil(t, err)
 	require.Equal(t, userId, tkpair.UserId)
 	require.Equal(t, userName, tkpair.UserName)
@@ -48,51 +51,70 @@ func TestJWTParseAndVerifyRefreshToken(t *testing.T) {
 
 	e := gin.New()
 	e.POST("/", func(c *gin.Context) {
-		c.Header(AccessTokenKey, c.GetHeader(AccessTokenKey))
-		c.Header(RefreshTokenKey, c.GetHeader(RefreshTokenKey))
+		c.Header(AccessJwtKey, c.GetHeader(AccessJwtKey))
+		c.Header(RefreshJwtKey, c.GetHeader(RefreshJwtKey))
 		c.JSON(http.StatusOK, nil)
 	})
 	r := gofight.New()
 	r.POST("/").
 		SetDebug(true).
-		SetHeader(gofight.H{RefreshTokenKey: tkpair.RefreshTokenStr}).
+		SetHeader(gofight.H{RefreshJwtKey: tkpair.RefreshJwt}).
 		Run(e, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
-			refreshDetail, err := VerifyRefreshToken(req)
+			refreshDetail, err := VerifyRefreshJwt(req)
 			require.Nil(t, err)
 			require.Equal(t, refreshDetail.UserId, tkpair.UserId)
 			require.Equal(t, refreshDetail.UserName, tkpair.UserName)
-			require.Equal(t, refreshDetail.RefreshTokenStr, tkpair.RefreshTokenStr)
+			require.Equal(t, refreshDetail.RefreshJwt, tkpair.RefreshJwt)
+			require.Equal(t, refreshDetail.RefreshJwtUuid, tkpair.RefreshJwtUuid)
+
 			utils.PrintlnAsJson("refresh token details:", refreshDetail)
 		})
 }
 
-func TestJWTParseAndVerifyAcessTokenTimeout(t *testing.T) {
+func TestJWTParseAndVerifyAcessJwtTimeout(t *testing.T) {
 	AccessTimeout = time.Nanosecond
+
 	var userId, userName = "admin001", "Zealy"
-	tkpair, err := CreateTokenPair(userId, userName)
-	require.Nil(t, err)
-	require.Equal(t, userId, tkpair.UserId)
-	require.Equal(t, userName, tkpair.UserName)
-	utils.PrintlnAsJson("token pair struct:", tkpair)
+	tkpair, _ := CreateJwtPair(userId, userName)
 
 	time.Sleep(time.Second * 2)
 
 	e := gin.New()
 	e.POST("/", func(c *gin.Context) {
-		c.Header(AccessTokenKey, c.GetHeader(AccessTokenKey))
-		c.Header(RefreshTokenKey, c.GetHeader(RefreshTokenKey))
+		c.Header(AccessJwtKey, c.GetHeader(AccessJwtKey))
 		c.JSON(http.StatusOK, nil)
 	})
 	r := gofight.New()
 	r.POST("/").
 		SetDebug(true).
-		SetHeader(gofight.H{AccessTokenKey: tkpair.AccessTokenStr}).
+		SetHeader(gofight.H{AccessJwtKey: tkpair.AccessJwt}).
 		Run(e, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
-			accessDetail, err := VerifyAccessToken(req)
-			require.Nil(t, err, err)
-			require.Equal(t, accessDetail.UserId, tkpair.UserId)
-			require.Equal(t, accessDetail.UserName, tkpair.UserName)
-			require.Equal(t, accessDetail.AccessTokenStr, tkpair.AccessTokenStr)
-			utils.PrintlnAsJson("access token details:", accessDetail)
+			_, err := VerifyAccessJwt(req)
+			require.NotNil(t, err)
+			fmt.Println(err)
+		})
+}
+
+func TestJWTParseAndVerifyFreshJwtTimeout(t *testing.T) {
+	RefreshTimeout = time.Nanosecond
+
+	var userId, userName = "admin001", "Zealy"
+	tkpair, _ := CreateJwtPair(userId, userName)
+
+	time.Sleep(time.Second * 2)
+
+	e := gin.New()
+	e.POST("/", func(c *gin.Context) {
+		c.Header(RefreshJwtKey, c.GetHeader(RefreshJwtKey))
+		c.JSON(http.StatusOK, nil)
+	})
+	r := gofight.New()
+	r.POST("/").
+		SetDebug(true).
+		SetHeader(gofight.H{RefreshJwtKey: tkpair.RefreshJwt}).
+		Run(e, func(res gofight.HTTPResponse, req gofight.HTTPRequest) {
+			_, err := VerifyRefreshJwt(req)
+			require.NotNil(t, err)
+			fmt.Println(err)
 		})
 }
