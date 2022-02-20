@@ -17,10 +17,20 @@ const (
 	ErrTagFileReadErr ErrorTag = "file_read_error"
 )
 
+// Error tags on encode and decode
+const (
+	ErrTagJsonUnmarshalErr ErrorTag = "json_unmarshal_error"
+)
+
 // Error tags on network
 const (
 	ErrTagNetworkConFailure      ErrorTag = "connection_failure"
 	ErrTagNetworkRetryTimesLimit ErrorTag = "retry_too_many_times"
+)
+
+// Error tags on http communication
+const (
+	ErrTagHttpHandshak ErrorTag = "handshak_failure"
 )
 
 // Error tags on time
@@ -57,34 +67,36 @@ const (
 
 // Field name of MyError type
 const (
-	FieldNameId         FieldName = "id"
-	FieldNameMsg        FieldName = "msg"
-	FieldNameErrType    FieldName = "error_type"
-	FieldNameErrCode    FieldName = "error_code"
-	FieldNameWhat       FieldName = "what"
-	FieldNameWho        FieldName = "who"
-	FieldNameWhen       FieldName = "when"
-	FieldNameWhy        FieldName = "why"
-	FieldNameWrappedErr FieldName = "wrapped_err"
-	FieldNameDetails    FieldName = "details"
-	FieldNameTags       FieldName = "tags"
+	FieldNameId           FieldName = "id"
+	FieldNameErrMsg       FieldName = "error_msg"
+	FieldNameErrType      FieldName = "error_type"
+	FieldNameErrCode      FieldName = "error_code"
+	FieldNameWhat         FieldName = "what"
+	FieldNameWho          FieldName = "who"
+	FieldNameWhen         FieldName = "when"
+	FieldNameWhy          FieldName = "why"
+	FieldNameWrappedErr   FieldName = "wrapped_err"
+	FiledNameWrappedMyErr FieldName = "wrapped_my_err"
+	FieldNameDetails      FieldName = "details"
+	FieldNameTags         FieldName = "tags"
 
 	FieldNameFrom  FieldName = "from"
 	FieldNameOrder FieldName = "order"
 )
 
 var FieldNames = map[string]struct{}{
-	"id":          struct{}{},
-	"msg":         struct{}{},
-	"error_type":  struct{}{},
-	"error_code":  struct{}{},
-	"what":        struct{}{},
-	"who":         struct{}{},
-	"when":        struct{}{},
-	"why":         struct{}{},
-	"wrapped_err": struct{}{},
-	"details":     struct{}{},
-	"tags":        struct{}{},
+	"id":             struct{}{},
+	"msg_msg":        struct{}{},
+	"error_type":     struct{}{},
+	"error_code":     struct{}{},
+	"what":           struct{}{},
+	"who":            struct{}{},
+	"when":           struct{}{},
+	"why":            struct{}{},
+	"wrapped_my_err": struct{}{},
+	"wrapped_err":    struct{}{},
+	"details":        struct{}{},
+	"tags":           struct{}{},
 }
 
 type FieldName string
@@ -106,6 +118,9 @@ type Error interface {
 	Is(target *MyError) bool
 
 	WithMsg(m string) *MyError
+	WithMsgAppend(m string) *MyError
+	WithMsgf(format string, a ...any) *MyError
+	WithMsgfAppend(format string, a ...any) *MyError
 	WithTag(t ErrorTag) *MyError
 	WithTags(ts []ErrorTag) *MyError
 	WithErrType(t ErrorType) *MyError
@@ -141,9 +156,8 @@ var _ Error = (*MyError)(nil)
 // MyError represents a common error type that implements
 // the Error interface as defined above.
 type MyError struct {
-	ID  string `json:"id"`
-	Msg string `json:"msg,omitempty"`
-
+	ID      string    `json:"id"`
+	ErrMsg  string    `json:"error_msg,omitempty"`
 	ErrType ErrorType `json:"error_type,omitempty"`
 	ErrCode ErrorCode `json:"error_code,omitempty"`
 
@@ -152,7 +166,8 @@ type MyError struct {
 	When string `json:"when,omitempty"` // timestamp
 	Why  string `json:"why,omitempty"`
 
-	WrappedErr error `json:"-"`
+	WrappedMyErr *MyError `json:"wrapped_my_err,omitempty"`
+	WrappedErr   error    `json:"wrapped_err,omitempty"`
 
 	Details map[string]string `json:"details,omitempty"`
 
@@ -167,76 +182,90 @@ func New() *MyError {
 	return e
 }
 
+func NewWithMsg(msg string) *MyError {
+	e := &MyError{}
+	e.ErrMsg = msg
+	e.ID = uuid.NewString()
+	e.Details = make(map[string]string)
+	e.Tags = make(map[ErrorTag]struct{})
+	return e
+}
+
+func NewWithMsgf(format string, a ...any) *MyError {
+	msg := fmt.Sprintf(format, a...)
+	e := &MyError{}
+	e.ErrMsg = msg
+	e.ID = uuid.NewString()
+	e.Details = make(map[string]string)
+	e.Tags = make(map[ErrorTag]struct{})
+	return e
+}
+
 func (e *MyError) Error() string {
-	if e == nil {
-		return ""
-	}
-
 	var total = e.Errors()
-
 	var strs string
-	var p error
 
-	for p = e; p != nil; {
-		myErr, ok := p.(*MyError)
+	for myErr := e; myErr != (*MyError)(nil); myErr = myErr.WrappedMyErr {
 		var str string
-		str = fmt.Sprintf("%s:%s,", string(FieldNameOrder), strconv.Itoa(total))
+		//str = fmt.Sprintf("%s:%s,", string(FieldNameOrder), strconv.Itoa(total))
 
-		if ok {
-			//str += fmt.Sprintf("%q:%q,", string(FieldNameId), myErr.ID)
+		//str += fmt.Sprintf("%q:%q,", string(FieldNameId), myErr.ID)
 
-			if myErr.Tags != nil {
-				var tags string
-				for t, _ := range myErr.Tags {
-					tags += fmt.Sprintf("%s,", t)
+		if len(myErr.Tags) == 0 {
+			var tags string
+			for t, _ := range myErr.Tags {
+				tags += fmt.Sprintf("%s,", t)
 
-				}
-				tags = "{" + tags + "}"
-				str += fmt.Sprintf("%s:%s,", string(FieldNameTags), tags)
 			}
-
-			if myErr.Msg != "" {
-				str += fmt.Sprintf("%s:%s,", string(FieldNameMsg), myErr.Msg)
-			}
-			if myErr.ErrType != "" {
-				str += fmt.Sprintf("%s:%s,", string(FieldNameErrType), myErr.ErrType)
-			}
-			if myErr.ErrCode != "" {
-				str += fmt.Sprintf("%s:%s,", string(FieldNameErrCode), myErr.ErrCode)
-			}
-			if myErr.What != "" {
-				str += fmt.Sprintf("%s:%s,", string(FieldNameWhat), myErr.What)
-			}
-			if myErr.Who != "" {
-				str += fmt.Sprintf("%s:%s,", string(FieldNameWho), myErr.Who)
-			}
-			if myErr.When != "" {
-				str += fmt.Sprintf("%s:%s,", string(FieldNameWhen), myErr.When)
-			}
-			if myErr.Why != "" {
-				str += fmt.Sprintf("%s:%s,", string(FieldNameWhy), myErr.Why)
-			}
-
-			if len(myErr.Details) != 0 {
-				var details string
-				for k, v := range myErr.Details {
-					details += fmt.Sprintf("%s:%s,", k, v)
-				}
-				details = "{" + details[:len(details)-1] + "}"
-				str += fmt.Sprintf("%s:%s,", string(FieldNameDetails), details)
-			}
-
-			str = "{" + str[:len(str)-1] + "}"
-			strs += str + "\n"
-		} else {
-			var from string
-			from += fmt.Sprintf("{%s:%s,%s:%s}", string(FieldNameOrder), strconv.Itoa(total), string(FieldNameFrom), p.Error())
-			strs += from + "\n"
-			//break
+			tags = "{" + tags + "}"
+			str += fmt.Sprintf("%s:%s,", string(FieldNameTags), tags)
 		}
 
+		if myErr.ErrMsg != "" {
+			str += fmt.Sprintf("%s:%s,", string(FieldNameErrMsg), myErr.ErrMsg)
+		}
+		if myErr.ErrType != "" {
+			str += fmt.Sprintf("%s:%s,", string(FieldNameErrType), myErr.ErrType)
+		}
+		if myErr.ErrCode != "" {
+			str += fmt.Sprintf("%s:%s,", string(FieldNameErrCode), myErr.ErrCode)
+		}
+		if myErr.What != "" {
+			str += fmt.Sprintf("%s:%s,", string(FieldNameWhat), myErr.What)
+		}
+		if myErr.Who != "" {
+			str += fmt.Sprintf("%s:%s,", string(FieldNameWho), myErr.Who)
+		}
+		if myErr.When != "" {
+			str += fmt.Sprintf("%s:%s,", string(FieldNameWhen), myErr.When)
+		}
+		if myErr.Why != "" {
+			str += fmt.Sprintf("%s:%s,", string(FieldNameWhy), myErr.Why)
+		}
+
+		if len(myErr.Details) != 0 {
+			var details string
+			for k, v := range myErr.Details {
+				details += fmt.Sprintf("%s:%s,", k, v)
+			}
+			details = "{" + details[:len(details)-1] + "}"
+			//str += fmt.Sprintf("%s:%s,", string(FieldNameDetails), details)
+		}
+
+		str = "{" + str[:len(str)-1] + "}"
+		strs += str + "\n"
+
 		total -= 1
-		p = errors.Unwrap(p)
+		if myErr.WrappedErr != nil {
+			for wrapErr := myErr.WrappedErr; wrapErr != nil; wrapErr = errors.Unwrap(wrapErr) {
+				var from string
+				//from += fmt.Sprintf("{%s:%s,%s:%s}", string(FieldNameOrder), strconv.Itoa(total), string(FieldNameFrom), wrapErr.Error())
+				from += fmt.Sprintf("{%s:%s}", string(FieldNameFrom), wrapErr.Error())
+
+				strs += from + "\n"
+				total -= 1
+			}
+		}
 	}
 
 	return strs
@@ -271,16 +300,14 @@ func (e *MyError) ErrorFall() string {
 }
 
 func (e *MyError) Errors() int {
-	if e == nil {
-		return 0
-	}
-
 	var total int
-	var p error
 
-	for p = e; p != nil; {
+	for myErr := e; myErr != (*MyError)(nil); myErr = myErr.WrappedMyErr {
 		total++
-		p = errors.Unwrap(p)
+
+		for wrapErr := myErr.WrappedErr; wrapErr != nil; wrapErr = errors.Unwrap(wrapErr) {
+			total++
+		}
 	}
 
 	return total
@@ -291,7 +318,21 @@ func (e *MyError) Wrap(err error) *MyError {
 		println("an nil error is not allowed to wrap an error")
 		os.Exit(1)
 	}
+
+	if err == nil {
+		return e
+	}
+
+	myErr, ok := err.(*MyError)
+	if ok {
+		e.WrappedMyErr = myErr
+		return e
+	}
+
+	myErrNew := New()
 	e.WrappedErr = err
+	e.WrappedMyErr = myErrNew
+
 	return e
 }
 
@@ -299,7 +340,7 @@ func (e *MyError) Unwrap() error {
 	if e == nil {
 		return nil
 	}
-	return e.WrappedErr
+	return e.WrappedMyErr
 }
 
 func (e *MyError) As(t ErrorType) bool {
@@ -333,7 +374,34 @@ func (e *MyError) WithMsg(m string) *MyError {
 		println("an nil error is not allowed to access")
 		os.Exit(1)
 	}
-	e.Msg = m
+	e.ErrMsg = m
+	return e
+}
+
+func (e *MyError) WithMsgAppend(m string) *MyError {
+	if e == nil {
+		println("an nil error is not allowed to access")
+		os.Exit(1)
+	}
+	e.ErrMsg = e.ErrMsg + "," + m
+	return e
+}
+
+func (e *MyError) WithMsgf(format string, a ...any) *MyError {
+	if e == nil {
+		println("an nil error is not allowed to access")
+		os.Exit(1)
+	}
+	e.ErrMsg = fmt.Sprintf(format, a...)
+	return e
+}
+
+func (e *MyError) WithMsgfAppend(format string, a ...any) *MyError {
+	if e == nil {
+		println("an nil error is not allowed to access")
+		os.Exit(1)
+	}
+	e.ErrMsg = e.ErrMsg + "," + fmt.Sprintf(format, a...)
 	return e
 }
 
@@ -452,7 +520,7 @@ func (e *MyError) GetMsg() string {
 	if e == nil {
 		return ""
 	}
-	return e.Msg
+	return e.ErrMsg
 }
 
 func (e *MyError) GetErrType() ErrorType {
@@ -541,8 +609,8 @@ func (e *MyError) GetField(k string) string {
 		switch k {
 		case string(FieldNameId):
 			return e.ID
-		case string(FieldNameMsg):
-			return e.Msg
+		case string(FieldNameErrMsg):
+			return e.ErrMsg
 		case string(FieldNameErrType):
 			return string(e.ErrType)
 		case string(FieldNameErrCode):
@@ -556,7 +624,7 @@ func (e *MyError) GetField(k string) string {
 		case string(FieldNameWhy):
 			return e.Why
 		case string(FieldNameWrappedErr):
-			return e.WrappedErr.Error()
+			return e.WrappedMyErr.Error()
 		case string(FieldNameDetails):
 			str, _ := json.MarshalIndent(e.Details, "", "  ")
 			return string(str)
@@ -574,8 +642,8 @@ func (e *MyError) GetFields() map[string]string {
 
 	fields[string(FieldNameId)] = e.ID
 
-	if e.Msg != "" {
-		fields[string(FieldNameMsg)] = e.Msg
+	if e.ErrMsg != "" {
+		fields[string(FieldNameErrMsg)] = e.ErrMsg
 	}
 	if e.ErrType != "" {
 		fields[string(FieldNameErrType)] = string(e.ErrType)
@@ -595,8 +663,8 @@ func (e *MyError) GetFields() map[string]string {
 	if e.Why != "" {
 		fields[string(FieldNameWhy)] = e.Why
 	}
-	if e.WrappedErr != nil {
-		fields[string(FieldNameWrappedErr)] = e.WrappedErr.Error()
+	if e.WrappedMyErr != nil {
+		fields[string(FieldNameWrappedErr)] = e.WrappedMyErr.Error()
 	}
 
 	for k, v := range e.Details {
