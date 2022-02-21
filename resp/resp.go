@@ -117,7 +117,7 @@ var (
 //	//
 //	ErrAccessDenied = &ErrCodeMsg{21, `未授权的访问请求！`}
 //
-//	// database
+//	// db
 //	ErrDbInsert  = &ErrCodeMsg{1001, `网络开小差了，请重试(1001)`} //数据插入错误
 //	ErrDbDelete  = &ErrCodeMsg{1002, `网络开小差了，请重试(1002)`} //数据删除错误
 //	ErrDbUpdate  = &ErrCodeMsg{1003, `网络开小差了，请重试(1003)`} //数据修改错误
