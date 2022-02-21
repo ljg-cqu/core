@@ -12,7 +12,7 @@ func TestParseRSAPrivateKeyFromFile2(t *testing.T) {
 	require.NotNil(t, err)
 	require.Equal(t, true, err.TagExists(errors.ErrTagFilePathErr))
 
-	var validKeyPath = "./test/test_priv_key_for_rsa.key"
+	var validKeyPath = "../misc/test_priv_key_for_rsa.key"
 	rsaPrivKey, err := ParseRSAPrivateKeyFromFile(validKeyPath)
 	require.Nil(t, err)
 	PrintlnAsJson("parsed RSA: ", rsaPrivKey)

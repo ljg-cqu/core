@@ -6,14 +6,9 @@ import (
 	"testing"
 )
 
-func TestSum256FromString(t *testing.T) {
+func TestSum256(t *testing.T) {
 	c := "hello world\n"
-	fmt.Printf("%x", Sum256FromString(c))
-}
-
-func TestSum256FromBytes(t *testing.T) {
-	c := "hello world\n"
-	fmt.Printf("%x", Sum256FromBytes([]byte(c)))
+	fmt.Printf("%x", Sum256([]byte(c)))
 }
 
 func TestSum256FromFile(t *testing.T) {

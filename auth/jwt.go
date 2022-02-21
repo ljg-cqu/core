@@ -35,8 +35,8 @@ type AccessJwtDetail struct {
 	UserId   string
 	UserName string
 
-	AccessJwt string
-	//SignedMethod   string
+	AccessJwt      string
+	SignedMethod   string
 	AccessJwtUuid  string
 	AccessExpireAt time.Time
 }
@@ -45,8 +45,8 @@ type RefreshJwtDetail struct {
 	UserId   string
 	UserName string
 
-	RefreshJwt string
-	//SignedMethod     string
+	RefreshJwt      string
+	SignedMethod    string
 	RefreshJwtUuid  string
 	RefreshExpireAt time.Time
 }
@@ -74,13 +74,13 @@ func CreateJwtPair(userId, userName string) (*JwtPair, error) {
 		RefreshExpireAt: time.Now().Add(RefreshTimeout).Unix(),
 	}
 
-	//Creating Access Token
+	//Creating Access CurrentToken
 	accessTokenClaims := jwt.MapClaims{
 		"access_uuid": tokenPair.AccessJwtUuid,
 		"user_id":     tokenPair.UserId,
 		"user_name":   tokenPair.UserName,
 		"exp":         tokenPair.AccessExpireAt,
-		//"alg":         signMethod.Alg(),
+		"alg":         signMethod.Alg(),
 	}
 
 	accessToken := jwt.NewWithClaims(signMethod, accessTokenClaims)
@@ -92,13 +92,13 @@ func CreateJwtPair(userId, userName string) (*JwtPair, error) {
 	//accessTokenStr = base64.StdEncoding.EncodeToString([]byte(accessTokenStr))
 	tokenPair.AccessJwt = accessTokenStr
 
-	//Creating Refresh Token
+	//Creating Refresh CurrentToken
 	refreshTokenClaims := jwt.MapClaims{
 		"refresh_uuid": tokenPair.RefreshJwtUuid,
 		"user_id":      tokenPair.UserId,
 		"user_name":    tokenPair.UserName,
 		"exp":          tokenPair.RefreshExpireAt,
-		//"alg":          signMethod.Alg(),
+		"alg":          signMethod.Alg(),
 	}
 
 	refreshToken := jwt.NewWithClaims(signMethod, refreshTokenClaims)
@@ -133,8 +133,8 @@ func VerifyAccessJwtByStr(tokenStr string) (*AccessJwtDetail, error) {
 		UserId:   claims["user_id"].(string),
 		UserName: claims["user_name"].(string),
 
-		AccessJwt: tokenStr,
-		//SignedMethod:    claims["alg"].(string),
+		AccessJwt:      tokenStr,
+		SignedMethod:   claims["alg"].(string),
 		AccessJwtUuid:  claims["access_uuid"].(string),
 		AccessExpireAt: time.Unix(int64(claims["exp"].(float64)), 0),
 	}, nil
@@ -160,8 +160,8 @@ func VerifyRefreshJwtByStr(tokenStr string) (*RefreshJwtDetail, error) {
 		UserId:   claims["user_id"].(string),
 		UserName: claims["user_name"].(string),
 
-		RefreshJwt: tokenStr,
-		//SignedMethod:     claims["alg"].(string),
+		RefreshJwt:      tokenStr,
+		SignedMethod:    claims["alg"].(string),
 		RefreshJwtUuid:  claims["refresh_uuid"].(string),
 		RefreshExpireAt: time.Unix(int64(claims["exp"].(float64)), 0),
 	}, nil

@@ -1,14 +1,15 @@
 package logger
 
 import (
+	"github.com/ljg-cqu/core/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
-// a simple test
-// TODO: more test
+// a simple misc
+// TODO: more misc
 func TestLog(t *testing.T) {
 	logger := New(WithLogLevel(logrus.DebugLevel), WithFormatter(&logrus.TextFormatter{ForceColors: true}))
 	require.NotNil(t, logger)
@@ -59,5 +60,13 @@ func TestLog(t *testing.T) {
 		logger.WithField("method", "POST").Debug("Debug message") // It is not written to a file (because debug level < minLevel)
 		time.Sleep(time.Second * 1)
 	}
+}
 
+func TestNewForDebugJSON(t *testing.T) {
+	loggerDebug := NewForDebugJSON()
+	loggerDebug.WithError(errors.New().WithErrType(errors.ErrTypeParseRSAKey)).
+		Errorf("error_code:%v,error_msg:%v", "4000", "bad request.")
+
+	loggerDebugs := NewForDebugStr()
+	loggerDebugs.Errorf("error_code:%v,error_msg:%v", "4000", "bad request.")
 }

@@ -6,16 +6,9 @@ import (
 	"os"
 )
 
-func Sum256FromString(content string) []byte {
+func Sum256(message []byte) []byte {
 	h := sha256.New()
-	h.Write([]byte(content))
-
-	return h.Sum(nil)
-}
-
-func Sum256FromBytes(content []byte) []byte {
-	h := sha256.New()
-	h.Write(content)
+	h.Write(message)
 
 	return h.Sum(nil)
 }

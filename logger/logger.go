@@ -1,4 +1,4 @@
-// Package logger provides wrapper of logrus.Logger
+// Package logger provides wrapper of logrus.Log
 // with additional features supported such as customized hooks
 
 package logger
@@ -33,7 +33,7 @@ var logLevels = map[string]logrus.Level{
 	"TraceLevel": logrus.TraceLevel,
 }
 
-// New returns Logger with given Hook(s), which defaults to InfoLevel
+// New returns Log with given Hook(s), which defaults to InfoLevel
 // if the logLevelEnv isn't specified appropriately.
 func New(hkoptions ...Option) *logrus.Logger {
 	if logger != nil {
@@ -62,6 +62,22 @@ func New(hkoptions ...Option) *logrus.Logger {
 		}
 	}
 
+	return logger
+}
+
+func NewForDebugJSON() *logrus.Logger {
+	logger = logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	return logger
+}
+
+func NewForDebugStr() *logrus.Logger {
+	logger = logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+	logger.SetFormatter(&logrus.TextFormatter{
+		ForceColors: true,
+	})
 	return logger
 }
 
