@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"os"
 	"strconv"
 )
 
 // ----------tags----------
+
+// Error tags on type operation
+const (
+	ErrTagTypeAssertion ErrorTag = "type_assertion_err"
+)
 
 // Error tags on file system
 const (
@@ -30,7 +34,8 @@ const (
 
 // Error tags on http communication
 const (
-	ErrTagHttpHandshak ErrorTag = "handshak_failure"
+	ErrTagHttpHandshak ErrorTag = "http_handshak_failure"
+	ErrTagHttpRequest  ErrorTag = "http_request_error"
 )
 
 // Error tags on time
@@ -129,6 +134,7 @@ type Error interface {
 	WithWho(w string) *MyError
 	WithWhen(w string) *MyError // timestamp
 	WithWhy(w string) *MyError
+	WithWhyTag(w ErrorTag) *MyError
 	WithFiled(k, v string) *MyError
 	WithCaller(c string) *MyError
 	WithWorker(w string) *MyError
@@ -156,7 +162,7 @@ var _ Error = (*MyError)(nil)
 // MyError represents a common error type that implements
 // the Error interface as defined above.
 type MyError struct {
-	ID      string    `json:"id"`
+	ID      string    `json:"id,omitempty"`
 	ErrMsg  string    `json:"error_msg,omitempty"`
 	ErrType ErrorType `json:"error_type,omitempty"`
 	ErrCode ErrorCode `json:"error_code,omitempty"`
@@ -176,7 +182,7 @@ type MyError struct {
 
 func New() *MyError {
 	e := &MyError{}
-	e.ID = uuid.NewString()
+	//e.ID = uuid.NewString()
 	e.Details = make(map[string]string)
 	e.Tags = make(map[ErrorTag]struct{})
 	return e
@@ -185,7 +191,7 @@ func New() *MyError {
 func NewWithMsg(msg string) *MyError {
 	e := &MyError{}
 	e.ErrMsg = msg
-	e.ID = uuid.NewString()
+	//e.ID = uuid.NewString()
 	e.Details = make(map[string]string)
 	e.Tags = make(map[ErrorTag]struct{})
 	return e
@@ -195,7 +201,7 @@ func NewWithMsgf(format string, a ...any) *MyError {
 	msg := fmt.Sprintf(format, a...)
 	e := &MyError{}
 	e.ErrMsg = msg
-	e.ID = uuid.NewString()
+	//e.ID = uuid.NewString()
 	e.Details = make(map[string]string)
 	e.Tags = make(map[ErrorTag]struct{})
 	return e
@@ -253,7 +259,8 @@ func (e *MyError) Error() string {
 		}
 
 		str = "{" + str[:len(str)-1] + "}"
-		strs += str + "\n"
+		//strs += str + "\n"
+		strs += str + ","
 
 		total -= 1
 		if myErr.WrappedErr != nil {
@@ -262,7 +269,9 @@ func (e *MyError) Error() string {
 				//from += fmt.Sprintf("{%s:%s,%s:%s}", string(FieldNameOrder), strconv.Itoa(total), string(FieldNameFrom), wrapErr.Error())
 				from += fmt.Sprintf("{%s:%s}", string(FieldNameFrom), wrapErr.Error())
 
-				strs += from + "\n"
+				//strs += from + "\n"
+				strs += from + ","
+
 				total -= 1
 			}
 		}
@@ -411,6 +420,11 @@ func (e *MyError) WithTag(t ErrorTag) *MyError {
 		os.Exit(1)
 	}
 	e.Tags[t] = struct{}{}
+	return e
+}
+
+func (e *MyError) WithWhyTag(w ErrorTag) *MyError {
+	e.Why = string(w)
 	return e
 }
 

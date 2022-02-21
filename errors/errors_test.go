@@ -29,7 +29,7 @@ func TestMyError(t *testing.T) {
 		Wrap(myErr4)
 
 	fmt.Println(myErr5)
-	fmt.Println(myErr5.ErrorFall())
+	//fmt.Println(myErr5.ErrorFall())
 	require.Equal(t, true, myErr4.As(ErrTypeParseRSAKey))
 	require.Equal(t, false, myErr5.Is(myErr4))
 	require.Equal(t, true, myErr4.Is(myErr5.Unwrap().(*MyError)))
