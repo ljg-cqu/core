@@ -19,7 +19,7 @@ func TestNetEaseSMTPClient_Send(t *testing.T) {
 
 	const htmlBody = `<html>
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta http-equiv="RawContent-Type" content="text/html; charset=utf-8" />
 		<title>Hello Gophers!</title>
 	</head>
 	<body>
@@ -33,7 +33,7 @@ func TestNetEaseSMTPClient_Send(t *testing.T) {
 	email.SetFrom("Zealy <ljg_cqu@126.com>").
 		AddTo("ljg_cqu@126.com", "luo.jigao@21vianet.com").
 		AddCc("qq1025003548@gmail.com", "641277312@qq.com").
-		SetSubject("Another new ABFPaaS Email for test purpose")
+		SetSubject("Another new ABFPaaS Email for tests purpose")
 
 	email.SetBody(mail.TextHTML, htmlBody)
 
