@@ -2,8 +2,10 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 func TestNewPgxPoolForTest(t *testing.T) {
@@ -14,5 +16,10 @@ func TestNewPgxPoolForTest(t *testing.T) {
 	var greeting string
 	err := pl.QueryRow(context.Background(), "select 'Hello, world!'").Scan(&greeting)
 	require.Nil(t, err)
-	require.Equal(t, "Hello, world!", greeting)
+
+	fmt.Println("connected to: ", ts.PGURL().String())
+
+	after := time.After(time.Second * 10)
+
+	<-after
 }
