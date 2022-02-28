@@ -79,7 +79,7 @@ func main() {
 
 	app = cli.NewRouter("Cache API\nThis cache api is implemented base on allegro/bigcache.", version)
 
-	app.Contact("zealy", "ljg_cqu@126.com", "https://github.com/ljg-cqu/core/bigcache/server")
+	app.Contact("zealy", "ljg_cqu@126.com", "https://github.com/ljg-cqu/core/tree/main/bigcache/server")
 
 	app.DocsHandler(huma.SwaggerUIHandler(huma.New("Test API", version)))
 	//app.DocsHandler(huma.ReDocHandler(huma.New("Test API", version)))
