@@ -81,5 +81,8 @@ func main() {
 	pdfFileDetailsResource := app.Resource("/esignbox/pdf_file/{fileId}/details")
 	template.RunQueryPdfFileDetails(pdfFileDetailsResource, client)
 
+	deleteFillControlResource := app.Resource("/esignbox/docTemplate/{templateId}/components/{ids}")
+	template.RunDeleteFillControl(deleteFillControlResource, client)
+
 	app.Run()
 }

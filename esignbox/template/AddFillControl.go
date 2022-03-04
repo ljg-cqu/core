@@ -16,8 +16,9 @@ const (
 // https://open.esign.cn/doc/detail?id=opendoc%2Fsaas_api%2Fzv9rch&namespace=opendoc%2Fsaas_api
 
 type AddFillControlRequest struct {
-	TemplateId string            `json:"templateId" required:"true" example:"c4d4fe1b48184ba28982f68bf2c7bf25" path:"templateId" doc:"模板id"`
-	Body       []StructComponent `json:"structComponents" required:"true" type:"array" doc:"添加填写控件请求参数"`
+	TemplateId string `json:"templateId" required:"true" example:"c4d4fe1b48184ba28982f68bf2c7bf25" path:"templateId" doc:"模板id"`
+
+	Body []StructComponent `json:"structComponents" required:"true" type:"array" doc:"添加填写控件请求参数"`
 }
 
 type StructComponent struct {
@@ -44,7 +45,7 @@ type Style struct {
 }
 
 type Pos struct {
-	Page int     `json:"page" required:"true" default:"1" doc:"页码"`
+	Page int     `json:"page" required:"true" example:"1" default:"1" doc:"页码"`
 	X    float32 `json:"x" required:"true" format:"float" example:"20.2" default:"20" doc:"x轴坐标，左下角为原点"`
 	Y    float32 `json:"y" required:"true" format:"float" example:"100.1" default:"100" doc:"y轴坐标，左下角为原点"`
 }
@@ -56,7 +57,7 @@ type AddFillControlResponse struct {
 }
 
 type AddFillControlResponseData struct {
-	ComponentIdList []string `json:"componentIdList" doc:"添加/编辑的输入项组件id列表"`
+	ComponentIdList []string `json:"componentIdList" example:"a73bd123857445df97b3d45ae33891ed" doc:"添加/编辑的输入项组件id列表"`
 }
 
 func AddFillControl(client *resty.Client) func(ctx huma.Context, req AddFillControlRequest) {
@@ -73,7 +74,7 @@ func AddFillControl(client *resty.Client) func(ctx huma.Context, req AddFillCont
 			"X-Tsign-Open-Token":  oauth.Token,
 			"Content-Type":        oauth.ContentType,
 		}).SetBody(&req).
-			SetResult(&parsedResp).Post("/v1/docTemplates/{" + req.TemplateId + "/components")
+			SetResult(&parsedResp).Post("/v1/docTemplates/" + req.TemplateId + "/components")
 
 		if common.WriteError(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
 			return
@@ -84,7 +85,7 @@ func AddFillControl(client *resty.Client) func(ctx huma.Context, req AddFillCont
 }
 
 func RunAddFillControl(r *huma.Resource, client *resty.Client) {
-	r.Post("AddFillControl", "添加填写控件",
+	r.Post("AddFillControl", "添加或修改填写控件",
 		responses.BadRequest(),
 		responses.OK().Model(AddFillControlResponseData{}),
 	).Run(AddFillControl(client))
