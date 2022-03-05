@@ -1,4 +1,4 @@
-package middle
+package middleware
 
 import (
 	"github.com/appleboy/gofight/v2"
