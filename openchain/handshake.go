@@ -2,7 +2,7 @@ package openchain
 
 import (
 	"encoding/hex"
-	"github.com/ljg-cqu/core/_errors"
+	"github.com/ljg-cqu/core/errors"
 	"github.com/ljg-cqu/core/utils"
 	"time"
 )
@@ -19,7 +19,7 @@ type HandshakeResponse struct {
 	Token   string `json:"data"`
 }
 
-func (c *Client) HandshakeIfNeeded() _errors.Error {
+func (c *Client) HandshakeIfNeeded() errors.Error {
 	if c.CurrentToken != "" {
 		if time.Now().Add(time.Second * 10).Before(c.TokenExpireAt) {
 			return nil
@@ -33,7 +33,7 @@ func (c *Client) HandshakeIfNeeded() _errors.Error {
 
 	signature, err := utils.SignRS256(c.AccessKey, []byte(req.AccessId+req.Time))
 	if err != nil {
-		return err.WithMsgf("failed to handshake:%v", err).WithTag(_errors.ErrTagHttpHandshak)
+		return err.WithMsgf("failed to handshake:%v", err).WithTag(errors.ErrTagHttpHandshak)
 	}
 
 	req.Secret = hex.EncodeToString(signature)
@@ -45,7 +45,7 @@ func (c *Client) HandshakeIfNeeded() _errors.Error {
 		Post(c.HandshakeUrl)
 
 	if err_ != nil {
-		return _errors.NewWithMsgf("failed to handshake:%v", err).WithTag(_errors.ErrTagHttpHandshak)
+		return errors.NewWithMsgf("failed to handshake:%v", err).WithTag(errors.ErrTagHttpHandshak)
 	}
 
 	c.CurrentToken = res.Token

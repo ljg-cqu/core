@@ -1,7 +1,7 @@
 package openchain
 
 import (
-	"github.com/ljg-cqu/core/_errors"
+	"github.com/ljg-cqu/core/errors"
 	"github.com/ljg-cqu/core/utils"
 )
 
@@ -38,10 +38,10 @@ type NewAccount struct {
 	CreatedAt Timestamp `json:"created_at"`
 }
 
-func (r *Response) ParseAccount() (*Account, _errors.Error) {
+func (r *Response) ParseAccount() (*Account, errors.Error) {
 	var acc Account
 	if err := utils.Json.Unmarshal([]byte(r.Data), &acc); err != nil {
-		_errors.NewWithMsgf("failed to parse account:%v", err).WithWhyTag(_errors.ErrTagJsonUnmarshalErr)
+		errors.NewWithMsgf("failed to parse account:%v", err).WithWhyTag(errors.ErrTagJsonUnmarshalErr)
 	}
 
 	return &acc, nil

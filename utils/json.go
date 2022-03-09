@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/ljg-cqu/core/_errors"
+	"github.com/ljg-cqu/core/errors"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
@@ -18,14 +18,14 @@ func PrintlnAsJson(pre string, v any) {
 	fmt.Println(string(bytes))
 }
 
-func UnmarshalJsonFile(path string, a any) _errors.Error {
+func UnmarshalJsonFile(path string, a any) errors.Error {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return _errors.NewWithMsgf("failed to read file:%v", err).WithTag(_errors.ErrTagFileReadErr)
+		return errors.NewWithMsgf("failed to read file:%v", err).WithTag(errors.ErrTagFileReadErr)
 	}
 	err = Json.Unmarshal(bytes, a)
 	if err != nil {
-		return _errors.NewWithMsgf("failed to unmarshal file:%v", err).WithTag(_errors.ErrTagJsonUnmarshalErr)
+		return errors.NewWithMsgf("failed to unmarshal file:%v", err).WithTag(errors.ErrTagJsonUnmarshalErr)
 	}
 
 	return nil

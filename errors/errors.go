@@ -1,4 +1,4 @@
-package _errors
+package errors
 
 import (
 	"encoding/json"

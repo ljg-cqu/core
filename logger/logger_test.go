@@ -63,7 +63,7 @@ func TestLog(t *testing.T) {
 
 //func TestNewForDebugJSON(t *testing.T) {
 //	loggerDebug := NewForDebugJSON()
-//	loggerDebug.WithError(_errors.New().WithErrType(_errors.ErrTypeParseRSAKey)).
+//	loggerDebug.WithError(errors.New().WithErrType(errors.ErrTypeParseRSAKey)).
 //		Errorf("error_code:%v,error_msg:%v", "4000", "bad request.")
 //
 //	loggerDebugs := NewForDebugStr()

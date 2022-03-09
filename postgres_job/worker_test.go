@@ -7,7 +7,7 @@ import (
 	"github.com/cockroachdb/cockroach-go/v2/testserver"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/ljg-cqu/core/_errors"
+	"github.com/ljg-cqu/core/errors"
 	"github.com/ljg-cqu/core/logger"
 	"github.com/ljg-cqu/core/postgres"
 	"github.com/ljg-cqu/core/utils"
@@ -53,7 +53,7 @@ func (s *WorkerTestSuite) TestExample() {
 		var args printNameArgs
 		err := json.Unmarshal(j.Args, &args)
 		if err != nil {
-			return _errors.NewWithMsgf("failed to unmarshal args:%v", err)
+			return errors.NewWithMsgf("failed to unmarshal args:%v", err)
 		}
 		fmt.Printf("Hello %s!\n", args.Name)
 
@@ -87,7 +87,7 @@ func (s *WorkerTestSuite) TestExample() {
 	g.Go(func() error {
 		err := workers.Run(gctx)
 		if err != nil {
-			return _errors.NewWithMsg("gue workers error").Wrap(err)
+			return errors.NewWithMsg("gue workers error").Wrap(err)
 		}
 		return nil
 	})
