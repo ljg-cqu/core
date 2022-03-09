@@ -3,7 +3,7 @@ package openchain
 import (
 	"encoding/json"
 	"github.com/go-resty/resty/v2"
-	"github.com/ljg-cqu/core/errors"
+	"github.com/ljg-cqu/core/_errors"
 	"github.com/ljg-cqu/core/utils"
 	"strconv"
 )
@@ -22,7 +22,7 @@ type CreateAccountReq struct {
 	GasLimit        string `json:"gas"`
 }
 
-func (c *Client) CreateAccount(id string) (*NewAccount, errors.Error) {
+func (c *Client) CreateAccount(id string) (*NewAccount, _errors.Error) {
 	var acc = &NewAccount{
 		Id:    id,
 		KmsId: utils.Uuid(),
@@ -45,7 +45,7 @@ func (c *Client) CreateAccount(id string) (*NewAccount, errors.Error) {
 	var res Response
 	resp, err := c.R().SetBody(req).SetResult(&res).Post(c.TransactUrl)
 	if err != nil {
-		return nil, errors.NewWithMsgf("failed to create account:%v", err).WithTag(errors.ErrTagHttpRequest)
+		return nil, _errors.NewWithMsgf("failed to create account:%v", err).WithTag(_errors.ErrTagHttpRequest)
 	}
 
 	_ = resp
@@ -73,7 +73,7 @@ type QueryAccountStr struct {
 
 // TODO: insight of open chain error code
 
-func (c *Client) QueryAccount(account string) (*Account, errors.Error) {
+func (c *Client) QueryAccount(account string) (*Account, _errors.Error) {
 	acc, _ := json.Marshal(&QueryAccountStr{QueryAccount: account})
 	var req = &QueryAccountReq{
 		BizId:      c.BizId,
@@ -90,7 +90,7 @@ func (c *Client) QueryAccount(account string) (*Account, errors.Error) {
 			_ = v
 			_ = ok
 		}
-		return nil, errors.NewWithMsgf("failed to query account:%v", err)
+		return nil, _errors.NewWithMsgf("failed to query account:%v", err)
 	}
 	_ = resp
 	return res.ParseAccount() // TODO;

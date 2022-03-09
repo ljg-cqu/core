@@ -1,0 +1,100 @@
+package postgres_job
+
+import (
+	"context"
+	gue "github.com/vgarvardt/gue/v3"
+	"github.com/vgarvardt/gue/v3/adapter"
+	"time"
+)
+
+// Backoff is the interface for backoff implementation that will be used
+// to reschedule errored jobs.
+type Backoff func(retries int) time.Duration
+
+// Job is a single unit of work for Gue to perform.
+type Job gue.Job
+
+/*
+// gue.Job is a single unit of work for Gue to perform.
+type Job struct {
+	// ID is the unique database ID of the Job. It is ignored on job creation.
+	ID int64
+
+	// Queue is the name of the queue. It defaults to the empty queue "".
+	Queue string
+
+	// Priority is the priority of the Job. The default priority is 0, and a
+	// lower number means a higher priority.
+	//
+	// The highest priority is -32768, the lowest one is +32767
+	Priority int16
+
+	// RunAt is the time that this job should be executed. It defaults to now(),
+	// meaning the job will execute immediately. Set it to a value in the future
+	// to delay a job's execution.
+	RunAt time.Time
+
+	// Type maps job to a worker func.
+	Type string
+
+	// Args must be the bytes of a valid JSON string
+	Args []byte
+
+	// ErrorCount is the number of times this job has attempted to run, but
+	// failed with an error. It is ignored on job creation.
+	// This field is initialised only when the Job is being retrieved from the DB and is not
+	// being updated when the current Job run errored.
+	ErrorCount int32
+
+	// LastError is the error message or stack trace from the last time the job
+	// failed. It is ignored on job creation.
+	// This field is initialised only when the Job is being retrieved from the DB and is not
+	// being updated when the current Job run errored.
+	LastError pgtype.Text
+
+	mu      sync.Mutex
+	deleted bool
+	pool    adapter.ConnPool
+	tx      adapter.Tx
+	backoff Backoff
+}
+*/
+
+// Tx returns DB transaction that this job is locked to. You may use
+// it as you please until you call Done(). At that point, this transaction
+// will be committed. This function will return nil if the Job's
+// transaction was closed with Done().
+func (j *Job) Tx() adapter.Tx {
+	gueJob := (*gue.Job)(j)
+	return gueJob.Tx()
+}
+
+// Delete marks this job as complete by deleting it from the database.
+//
+// You must also later call Done() to return this job's database connection to
+// the pool. If you got the job from the worker - it will take care of cleaning up the job and resources,
+// no need to do this manually in a WorkFunc.
+func (j *Job) Delete(ctx context.Context) error {
+	gueJob := (*gue.Job)(j)
+	return gueJob.Delete(ctx)
+}
+
+// Done commits transaction that marks job as done. If you got the job from the worker - it will take care of
+//cleaning up the job and resources, no need to do this manually in a WorkFunc.
+func (j *Job) Done(ctx context.Context) error {
+	gueJob := (*gue.Job)(j)
+	return gueJob.Done(ctx)
+}
+
+// Error marks the job as failed and schedules it to be reworked. An error
+// message or backtrace can be provided as msg, which will be saved on the job.
+// It will also increase the error count.
+//
+// This call marks job as done and releases (commits) transaction,
+// so calling Done() is not required, although calling it will not cause any issues.
+// If you got the job from the worker - it will take care of cleaning up the job and resources,
+// no need to do this manually in a WorkFunc.
+func (j *Job) Error(ctx context.Context, msg string) (err error) {
+	gueJob := (*gue.Job)(j)
+	return gueJob.Error(ctx, msg)
+}

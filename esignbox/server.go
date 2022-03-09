@@ -56,6 +56,8 @@ func main() {
 	app.Contact("罗继高", "ljg_cqu@126.com", "https://github.com/ljg-cqu/core")
 
 	app.DocsHandler(huma.SwaggerUIHandler(huma.New("Test API", version)))
+	//app.DocsHandler(huma.RapiDocHandler(huma.New("Test API", version)))
+	//app.DocsHandler(huma.ReDocHandler(huma.New("Test API", version)))
 
 	tokenResource := app.Resource("/esignbox/token")
 	token.RunGetToken(tokenResource, client)

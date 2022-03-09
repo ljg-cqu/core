@@ -1,0 +1,106 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Basic Example",
+    "description": "This app showcases a trivial REST API.",
+    "version": "v1.2.3"
+  },
+  "paths": {
+    "/hello/{name}": {
+      "get": {
+        "summary": "Greeter",
+        "description": "Greeter greets you.",
+        "operationId": "main",
+        "parameters": [
+          {
+            "name": "locale",
+            "in": "query",
+            "schema": {
+              "pattern": "^[a-z]{2}-[A-Z]{2}$",
+              "enum": [
+                "ru-RU",
+                "en-US"
+              ],
+              "type": "string",
+              "default": "en-US"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "minLength": 3,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Now": {
+                "style": "simple",
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelloOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestErrResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HelloOutput": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "RestErrResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Application-specific error code."
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Application context."
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message."
+          },
+          "status": {
+            "type": "string",
+            "description": "Status text."
+          }
+        }
+      }
+    }
+  }
+}

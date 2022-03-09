@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/auth"
-	"github.com/ljg-cqu/core/middle"
+	"github.com/ljg-cqu/core/middleware"
 	"github.com/ljg-cqu/core/resp"
 )
 
@@ -54,9 +54,9 @@ type RefreshRes struct {
 }
 
 // Refresh generates refresh JWT for later access
-// Note: this handler must be used with middle.ValidRefreshJwt
+// Note: this handler must be used with middleware.ValidRefreshJwt
 func Refresh(c *gin.Context) {
-	v, _ := c.Get(middle.CtxRefreshJwtDetailKey)
+	v, _ := c.Get(middleware.CtxRefreshJwtDetailKey)
 	tokenDetail := v.(auth.RefreshJwtDetail)
 	tkp, err := auth.CreateJwtPair(tokenDetail.UserId, tokenDetail.UserName)
 	if err != nil {

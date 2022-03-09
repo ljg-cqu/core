@@ -1,7 +1,7 @@
 package openchain
 
 import (
-	"github.com/ljg-cqu/core/errors"
+	"github.com/ljg-cqu/core/_errors"
 	"github.com/ljg-cqu/core/utils"
 )
 
@@ -32,16 +32,16 @@ type AuthMap struct {
 type Timestamp string
 
 type NewAccount struct {
-	Id        string    `json:"id"`
+	Id        string    `json:"id"` // account name
 	PublicKey string    `json:"public_key"`
 	KmsId     string    `json:"kms_id"`
 	CreatedAt Timestamp `json:"created_at"`
 }
 
-func (r *Response) ParseAccount() (*Account, errors.Error) {
+func (r *Response) ParseAccount() (*Account, _errors.Error) {
 	var acc Account
 	if err := utils.Json.Unmarshal([]byte(r.Data), &acc); err != nil {
-		errors.NewWithMsgf("failed to parse account:%v", err).WithWhyTag(errors.ErrTagJsonUnmarshalErr)
+		_errors.NewWithMsgf("failed to parse account:%v", err).WithWhyTag(_errors.ErrTagJsonUnmarshalErr)
 	}
 
 	return &acc, nil

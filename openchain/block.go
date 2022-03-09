@@ -2,7 +2,7 @@ package openchain
 
 import (
 	"github.com/go-resty/resty/v2"
-	"github.com/ljg-cqu/core/errors"
+	"github.com/ljg-cqu/core/_errors"
 )
 
 type QueryLastBlockReq struct {
@@ -35,7 +35,7 @@ func (c *Client) QueryLastBlock() (string, error) {
 			_ = v
 			_ = ok
 		}
-		return "", errors.NewWithMsgf("failed to query account:%v", err)
+		return "", _errors.NewWithMsgf("failed to query account:%v", err)
 	}
 	_ = resp
 	return res.Data, nil

@@ -8,7 +8,7 @@ import (
 )
 
 func TestClient_HandshakeIfNeeded(t *testing.T) {
-	client := New(logger.NewForDebugStr(), "../tests/config.json")
+	client := New(logger.NewForDebugStr(), "../tests/configs.json")
 	require.NotNil(t, client)
 	err := client.HandshakeIfNeeded()
 	require.Nil(t, err)

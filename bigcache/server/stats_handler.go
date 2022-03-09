@@ -15,7 +15,7 @@ type Stats struct {
 	Collisions int64 `json:"collisions" example:"1" doc:"Collisions is a number of happened key-collisions"`
 }
 
-func getCacheStatsHandler(ctx huma.Context, input GetCacheRequest) {
+func getCacheStatsHandler(ctx huma.Context) {
 	_stats := cache.Stats()
 	var stats Stats
 	stats.Hits = _stats.Hits

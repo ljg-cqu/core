@@ -45,7 +45,7 @@ func TestMarshalOpenChainHttpClientConfig(t *testing.T) {
 
 func TestReadOpenChainHttpClientConfig(t *testing.T) {
 	var c openchain.HttpClientConfig
-	bytes, err := ioutil.ReadFile("./config.json")
+	bytes, err := ioutil.ReadFile("./configs.json")
 	require.Nil(t, err)
 	err = utils.Json.Unmarshal(bytes, &c)
 	require.Nil(t, err)

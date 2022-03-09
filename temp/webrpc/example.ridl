@@ -1,0 +1,21 @@
+webrpc = v1
+
+name = your-app
+version = v0.1.0
+
+message User
+  - id: uint64
+  - username: string
+  - createdAt?: timestamp
+
+message UsersQueryFilter
+  - page?: uint32
+  - name?: string
+  - location?: string
+
+service ExampleService
+  - Ping()
+  - Status() => (status: bool)
+  - GetUserByID(userID: uint64) => (user: User)
+  - IsOnline(user: User) => (online: bool)
+  - ListUsers(q?: UsersQueryFilter) => (page: uint32, users: []User)

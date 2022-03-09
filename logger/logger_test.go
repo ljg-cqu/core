@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"github.com/ljg-cqu/core/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -62,11 +61,11 @@ func TestLog(t *testing.T) {
 	}
 }
 
-func TestNewForDebugJSON(t *testing.T) {
-	loggerDebug := NewForDebugJSON()
-	loggerDebug.WithError(errors.New().WithErrType(errors.ErrTypeParseRSAKey)).
-		Errorf("error_code:%v,error_msg:%v", "4000", "bad request.")
-
-	loggerDebugs := NewForDebugStr()
-	loggerDebugs.Errorf("error_code:%v,error_msg:%v", "4000", "bad request.")
-}
+//func TestNewForDebugJSON(t *testing.T) {
+//	loggerDebug := NewForDebugJSON()
+//	loggerDebug.WithError(_errors.New().WithErrType(_errors.ErrTypeParseRSAKey)).
+//		Errorf("error_code:%v,error_msg:%v", "4000", "bad request.")
+//
+//	loggerDebugs := NewForDebugStr()
+//	loggerDebugs.Errorf("error_code:%v,error_msg:%v", "4000", "bad request.")
+//}

@@ -5,7 +5,7 @@ import (
 	"github.com/appleboy/gofight/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/auth"
-	"github.com/ljg-cqu/core/middle"
+	"github.com/ljg-cqu/core/middleware"
 	"github.com/ljg-cqu/core/resp"
 	"github.com/ljg-cqu/core/utils"
 	"github.com/stretchr/testify/require"
@@ -69,7 +69,7 @@ func TestRefresh(t *testing.T) {
 	utils.PrintlnAsJson("past refresh jwt:", pastTkpair.RefreshJwt)
 
 	e := gin.Default()
-	e.Use(middle.ValidRefreshJwt())
+	e.Use(middleware.ValidRefreshJwt())
 	e.POST("/refresh", Refresh)
 
 	r := gofight.New()
@@ -107,7 +107,7 @@ func TestRefreshTimeout(t *testing.T) {
 	time.Sleep(time.Second * 2)
 
 	e := gin.Default()
-	e.Use(middle.ValidRefreshJwt())
+	e.Use(middleware.ValidRefreshJwt())
 	e.POST("/refresh", Refresh)
 
 	r := gofight.New()

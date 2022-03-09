@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/ljg-cqu/core/errors"
+	"github.com/ljg-cqu/core/_errors"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -10,7 +10,7 @@ func TestParseRSAPrivateKeyFromFile2(t *testing.T) {
 	var invalidKeyPath = "err path"
 	_, err := ParseRSAPrivateKeyFromFile(invalidKeyPath)
 	require.NotNil(t, err)
-	require.Equal(t, true, err.TagExists(errors.ErrTagFilePathErr))
+	require.Equal(t, true, err.TagExists(_errors.ErrTagFilePathErr))
 
 	var validKeyPath = "../misc/test_priv_key_for_rsa.key"
 	rsaPrivKey, err := ParseRSAPrivateKeyFromFile(validKeyPath)
@@ -22,7 +22,7 @@ func TestParseRSAPrivateKey(t *testing.T) {
 	var invalidInput = []byte(`invalid iinput key`)
 	_, err := ParseRSAPrivateKey(invalidInput)
 	require.NotNil(t, err)
-	require.Equal(t, errors.ErrTypeParseRSAKey, err.GetErrType())
+	require.Equal(t, _errors.ErrTypeParseRSAKey, err.GetErrType())
 
 	const pubPEM = `
 -----BEGIN PUBLIC KEY-----
@@ -42,7 +42,7 @@ AIU+2GKjyT3iMuzZxxFxPFMCAwEAAQ==
 
 	_, err = ParseRSAPrivateKey([]byte(pubPEM))
 	require.NotNil(t, err)
-	require.Equal(t, errors.ErrTypeParseRSAKey, err.GetErrType())
+	require.Equal(t, _errors.ErrTypeParseRSAKey, err.GetErrType())
 
 	const privKey = `-----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCtPQToFonF60OX

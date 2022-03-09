@@ -90,8 +90,9 @@ func main() {
 	cache.Put("putCache", "Store value in cache").Run(putCacheHandler)
 	cache.Delete("deleteCache", "Delete value in cache").Run(deleteCacheHandler)
 
-	stats := app.Resource("/v1/stats/{key}")
+	stats := app.Resource("/v1/stats")
 	stats.Get("getStats", "Return the cache's statistics", responses.OK().Model(&Stats{})).Run(getCacheStatsHandler)
 
+	fmt.Printf(app.OpenAPI().StringIndent("", " "))
 	app.Run()
 }

@@ -21,7 +21,7 @@ func TestNetEaseSMTPClient_Send(t *testing.T) {
 	<head>
 		<meta http-equiv="RawContent-Type" content="text/html; charset=utf-8" />
 		<title>Hello Gophers!</title>
-	</head>
+	</head>，
 	<body>
 		<p>This is the <b>Go gopher</b>.</p>
 		<p><img src="cid:Gopher.png" alt="Go gopher" /></p>

@@ -9,7 +9,7 @@ import (
 )
 
 func TestClient_QueryAccount(t *testing.T) {
-	client := New(logger.NewForDebugStr(), "../tests/config.json")
+	client := New(logger.NewForDebugStr(), "../tests/configs.json")
 	client.SetDebug(true)
 	require.NotNil(t, client)
 	account, err := client.QueryAccount("ff89d3d4569342028b4767e779e55994") // TODO: account type re def
@@ -18,7 +18,7 @@ func TestClient_QueryAccount(t *testing.T) {
 }
 
 func TestClient_CreateAccount(t *testing.T) {
-	client := New(logger.NewForDebugStr(), "../tests/config.json")
+	client := New(logger.NewForDebugStr(), "../tests/configs.json")
 	client.SetDebug(true)
 	require.NotNil(t, client)
 

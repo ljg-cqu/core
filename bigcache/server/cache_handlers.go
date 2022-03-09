@@ -11,7 +11,7 @@ import (
 // ---------handles GET requests----------
 
 type GetCacheRequest struct {
-	Key string `path:"key" minLenght:"1" maxLenght:"36" example:"my-unique-key" doc:"The unique key for value to be cached"`
+	Key string `path:"key" minLength:"1" maxLength:"36" example:"my-unique-key" doc:"The unique key for value to be cached"`
 }
 
 type GetCacheResponse struct {
@@ -51,7 +51,7 @@ type PutCacheRequest struct {
 }
 
 type PutCacheRequest_ struct {
-	Key  string          `path:"key" minLenght:"1" maxLenght:"36" example:"my-unique-key" doc:"The unique key for value to be cached"`
+	Key  string          `path:"key" minLength:"1" maxLength:"36" example:"my-unique-key" doc:"The unique key for value to be cached"`
 	Body PutCacheRequest `format:"binary" doc:"The binary content to be cached"`
 }
 
@@ -77,7 +77,7 @@ func putCacheHandler(ctx huma.Context, input PutCacheRequest_) {
 // ---------handles DELETE request----------
 
 type DeleteCacheRequest struct {
-	Key string `path:"key" minLenght:"1" maxLenght:"36" example:"my-unique-key" doc:"The unique key for value to be cached"`
+	Key string `path:"key" minLength:"1" maxLength:"36" example:"my-unique-key" doc:"The unique key for value to be cached"`
 }
 
 func deleteCacheHandler(ctx huma.Context, input DeleteCacheRequest) {

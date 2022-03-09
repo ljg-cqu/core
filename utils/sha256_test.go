@@ -15,5 +15,5 @@ func TestSum256FromFile(t *testing.T) {
 	path := "./sha256.go"
 	r, err := Sum256FromFile(path)
 	require.Nil(t, err)
-	fmt.Printf("%x", r)
+	fmt.Printf("len:%v, value:%x", len(r), r)
 }
