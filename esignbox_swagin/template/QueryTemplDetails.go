@@ -1,11 +1,11 @@
 package template
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/long2ice/swagin/router"
+	"github.com/pkg/errors"
 	"github.com/wI2L/fizz/markdown"
 )
 
@@ -53,26 +53,15 @@ type _Context struct {
 }
 
 func (req *QueryTemplDetailsRequest) Handler(ctx *gin.Context) {
-	parsedResp := QueryTemplDetailsResponse{}
-	oauth, err := token.GetOauthInfo()
+	data, err := queryTemplDetails(req.TemplateId)
 	if err != nil {
-		common.WriteError(ctx, 400, fmt.Sprintf("got an error when try to get authentication info:%w", err))
-		return
-	}
-
-	restyResp, err := common.Client.R().SetHeaders(map[string]string{
-		"X-Tsign-Open-App-Id": oauth.AppId,
-		"X-Tsign-Open-Token":  oauth.Token,
-		"Content-Type":        oauth.ContentType,
-	}).SetResult(&parsedResp).Get("/v1/docTemplates/" + req.TemplateId)
-
-	if common.WriteErrorE(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
+		common.WriteErrorf(ctx, 400, "got an error for query template %q details, error:%v", req.TemplateId, err)
 		return
 	}
 
 	// TODO: save file to db
 
-	common.WriteOK(ctx, parsedResp.Data)
+	common.WriteOK(ctx, data)
 }
 
 var QueryTemplDetailsRequestH = func() *router.Router {
@@ -98,4 +87,30 @@ var QueryTemplDetailsRequestH = func() *router.Router {
 	)
 
 	return r
+}
+
+func queryTemplDetails(templeId string) (*QueryTemplDetailsResponseData, error) {
+	parsedResp := QueryTemplDetailsResponse{}
+	oauth, err := token.GetOauthInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	restyResp, err := common.Client.R().SetHeaders(map[string]string{
+		"X-Tsign-Open-App-Id": oauth.AppId,
+		"X-Tsign-Open-Token":  oauth.Token,
+		"Content-Type":        oauth.ContentType,
+	}).SetResult(&parsedResp).Get("/v1/docTemplates/" + templeId)
+
+	_ = restyResp
+
+	if err != nil {
+		return nil, err
+	}
+
+	if parsedResp.Code != 0 {
+		return nil, errors.Errorf("error code:%v, error message:%v", parsedResp.Code, parsedResp.Msg)
+	}
+
+	return &parsedResp.Data, nil
 }

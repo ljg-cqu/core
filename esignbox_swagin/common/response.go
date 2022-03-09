@@ -8,11 +8,11 @@ import (
 )
 
 type ErrorResp struct {
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
+	Code int    `json:"code" binding:"required" description:"错误码"`
+	Msg  string `json:"msg" binding:"required" description:"错误信息"`
 }
 
-func WriteErrorE(ctx *gin.Context, respErr error, respStatusCode int, respStatus string, businessCode int, businessMsg string) bool {
+func WriteErrore(ctx *gin.Context, respErr error, respStatusCode int, respStatus string, businessCode int, businessMsg string) bool {
 	if respErr != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResp{Code: http.StatusBadRequest, Msg: "got an error when request esign:" + respErr.Error()})
 		return true
@@ -40,7 +40,7 @@ func WriteError(ctx *gin.Context, code int, msg string) {
 	})
 }
 
-func WriteErrorF(ctx *gin.Context, code int, format string, values ...interface{}) {
+func WriteErrorf(ctx *gin.Context, code int, format string, values ...interface{}) {
 	ctx.JSON(http.StatusBadRequest, ErrorResp{
 		Code: code,
 		Msg:  fmt.Sprintf(format, values),

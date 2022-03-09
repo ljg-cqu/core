@@ -34,7 +34,7 @@ func (req *DeleteFillControlRequest) Handler(ctx *gin.Context) {
 	parsedResp := _DeleteFillControlResponse{}
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
-		common.WriteErrorE(ctx, fmt.Errorf("got an error when try to get authentication info:%w", err), 0, "", 0, "")
+		common.WriteErrore(ctx, fmt.Errorf("got an error when try to get authentication info:%w", err), 0, "", 0, "")
 		return
 	}
 
@@ -45,12 +45,12 @@ func (req *DeleteFillControlRequest) Handler(ctx *gin.Context) {
 	}).SetBody(&req).
 		SetResult(&parsedResp).Delete("/v1/docTemplates/" + req.TemplateId + "/components/" + req.IDs)
 	if err != nil {
-		common.WriteErrorF(ctx, 400, "got an error when try to delete fill control, error:%v", err)
+		common.WriteErrorf(ctx, 400, "got an error when try to delete fill control, error:%v", err)
 		return
 	}
 
 	if parsedResp.Code != 0 {
-		common.WriteErrorF(ctx, 400, "got an error when try to delete fill control, code:%v, message:%v", parsedResp.Code, parsedResp.Msg)
+		common.WriteErrorf(ctx, 400, "got an error when try to delete fill control, code:%v, message:%v", parsedResp.Code, parsedResp.Msg)
 		return
 	}
 

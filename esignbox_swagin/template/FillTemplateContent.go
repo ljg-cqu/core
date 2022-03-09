@@ -100,7 +100,7 @@ func (req *FillTemplateContentRequest) Handler(ctx *gin.Context) {
 	parsedResp := FillTemplateContentResponse{}
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
-		common.WriteErrorE(ctx, fmt.Errorf("got an error when try to get authentication info:%w", err), 0, "", 0, "")
+		common.WriteErrore(ctx, fmt.Errorf("got an error when try to get authentication info:%w", err), 0, "", 0, "")
 		return
 	}
 
@@ -122,7 +122,7 @@ func (req *FillTemplateContentRequest) Handler(ctx *gin.Context) {
 	}).SetBody(&_req).
 		SetResult(&parsedResp.Data).Post(EsignSandBoxFillTemplateContentUrl)
 
-	if common.WriteErrorE(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
+	if common.WriteErrore(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
 		return
 	}
 

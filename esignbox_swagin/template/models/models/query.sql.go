@@ -5,6 +5,7 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/jackc/pgtype"
@@ -65,15 +66,14 @@ func (q *Queries) CreateStructComponent(ctx context.Context, arg *CreateStructCo
 }
 
 const createTemplate = `-- name: CreateTemplate :one
-INSERT INTO contract_templates (template_id, template_name, download_url, file_size, file_body)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO contract_templates (template_id, template_name, file_size, file_body)
+VALUES ($1, $2, $3, $4)
 RETURNING template_id
 `
 
 type CreateTemplateParams struct {
 	TemplateID   string `json:"templateID"`
 	TemplateName string `json:"templateName"`
-	DownloadUrl  string `json:"downloadUrl"`
 	FileSize     int64  `json:"fileSize"`
 	FileBody     []byte `json:"fileBody"`
 }
@@ -82,7 +82,6 @@ func (q *Queries) CreateTemplate(ctx context.Context, arg *CreateTemplateParams)
 	row := q.db.QueryRow(ctx, createTemplate,
 		arg.TemplateID,
 		arg.TemplateName,
-		arg.DownloadUrl,
 		arg.FileSize,
 		arg.FileBody,
 	)
@@ -298,9 +297,9 @@ WHERE template_id = $1
 `
 
 type UpdateContractTemplateDownloadUrlParams struct {
-	TemplateID            string    `json:"templateID"`
-	DownloadUrl           string    `json:"downloadUrl"`
-	DownloadUrlExpireTime time.Time `json:"downloadUrlExpireTime"`
+	TemplateID            string         `json:"templateID"`
+	DownloadUrl           sql.NullString `json:"downloadUrl"`
+	DownloadUrlExpireTime time.Time      `json:"downloadUrlExpireTime"`
 }
 
 func (q *Queries) UpdateContractTemplateDownloadUrl(ctx context.Context, arg *UpdateContractTemplateDownloadUrlParams) error {

@@ -52,7 +52,7 @@ func (req *QueryTemplUploadStatusRequest) Handler(ctx *gin.Context) {
 		"Content-Type":        oauth.ContentType,
 	}).SetResult(&parsedResp).Get("/v1/docTemplates/" + req.TemplateId + "/getBaseInfo")
 
-	if common.WriteErrorE(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
+	if common.WriteErrore(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
 		return
 	}
 

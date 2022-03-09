@@ -7,6 +7,7 @@ import (
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/long2ice/swagin/router"
+	"github.com/pkg/errors"
 	"github.com/wI2L/fizz/markdown"
 )
 
@@ -65,7 +66,7 @@ func (req *GetTemplUploadUrlRequest) Handler(ctx *gin.Context) {
 	}).SetBody(&req).
 		SetResult(&parsedResp).Post(EsignSandBoxUploadTemplUrl)
 
-	if common.WriteErrorE(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
+	if common.WriteErrore(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
 		return
 	}
 
@@ -131,38 +132,47 @@ var GetTemplUploadUrlRequestH = func() *router.Router {
 	return r
 }
 
-type getPDFTemplUploadUrlReq struct {
-	FileName string `json:"fileName"`
+func getTemplUploadUrl(fileName, contentMD5 string, contentType string) (*GetTemplUploadUrlResponseData, error) {
+	type getPDFTemplUploadUrlReq struct {
+		FileName    string `json:"fileName"`
+		ContentMd5  string `json:"contentMd5"`
+		ContentType string `json:"contentType"`
+		Convert2Pdf bool   `json:"convert2Pdf"`
+	}
 
-	ContentMd5 string `json:"contentMd5"`
-
-	ContentType string `json:"contentType"`
-	Convert2Pdf bool   `json:"convert2Pdf"`
-}
-
-func getPDFTemplUploadUrl(fileName, contentMD5 string) (*GetTemplUploadUrlResponseData, error) {
 	parsedResp := GetTemplUploadUrlResponse{}
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
 		return nil, err
 	}
 
+	convert2Pdf := false
+	if contentType != "application/pdf" {
+		convert2Pdf = true
+	}
+
 	req := getPDFTemplUploadUrlReq{
 		FileName:    fileName,
 		ContentMd5:  contentMD5,
-		ContentType: "application/pdf",
-		Convert2Pdf: false,
+		ContentType: contentType,
+		Convert2Pdf: convert2Pdf,
 	}
 
-	_, err = common.Client.R().SetHeaders(map[string]string{
+	restyResp, err := common.Client.R().SetHeaders(map[string]string{
 		"X-Tsign-Open-App-Id": oauth.AppId,
 		"X-Tsign-Open-Token":  oauth.Token,
 		"Content-Type":        oauth.ContentType,
 	}).SetBody(&req).
 		SetResult(&parsedResp).Post(EsignSandBoxUploadTemplUrl)
 
+	_ = restyResp
+
 	if err != nil {
 		return nil, err
+	}
+
+	if parsedResp.Code != 0 {
+		return nil, errors.Errorf("error code:%v, error message:%v", parsedResp.Code, parsedResp.Msg)
 	}
 
 	return &GetTemplUploadUrlResponseData{parsedResp.Data.TemplateId, parsedResp.Data.UploadUrl}, nil

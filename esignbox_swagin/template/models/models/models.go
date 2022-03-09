@@ -3,6 +3,7 @@
 package models
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -118,7 +119,7 @@ type ContractTemplate struct {
 	TemplateName          string             `json:"templateName"`
 	CreateTime            time.Time          `json:"createTime"`
 	FileStatus            TemplateFileStatus `json:"fileStatus"`
-	DownloadUrl           string             `json:"downloadUrl"`
+	DownloadUrl           sql.NullString     `json:"downloadUrl"`
 	DownloadUrlExpireTime time.Time          `json:"downloadUrlExpireTime"`
 	FileSize              int64              `json:"fileSize"`
 	FileBody              []byte             `json:"fileBody"`

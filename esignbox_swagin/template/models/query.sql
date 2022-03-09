@@ -1,6 +1,6 @@
 -- name: CreateTemplate :one
-INSERT INTO contract_templates (template_id, template_name, download_url, file_size, file_body)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO contract_templates (template_id, template_name, file_size, file_body)
+VALUES ($1, $2, $3, $4)
 RETURNING template_id;
 
 -- name: GetTemplate :one

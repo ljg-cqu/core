@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS contract_templates
 
     create_time timestamptz NOT NULL DEFAULT now(),
     file_status template_file_status NOT NULL DEFAULT '2-已上传成功',
-    download_url VARCHAR NOT NULL,
+    download_url VARCHAR,
     download_url_expire_time timestamptz NOT NULL DEFAULT now()+interval '1 hour',
 
     file_size BIGINT NOT NULL,
