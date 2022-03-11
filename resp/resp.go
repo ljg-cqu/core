@@ -175,7 +175,7 @@ func (e *ErrCodeMsg) WithFields(fields map[FieldKey]string) *ErrCodeMsg {
 	return e
 }
 
-func Succ(c *gin.Context, data any) {
+func Succ(c *gin.Context, data interface{}) {
 	dataStr, _ := utils.Json.MarshalToString(data)
 	resp(c, &RespObj{
 		ErrCodeMsg: *OK,

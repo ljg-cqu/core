@@ -1,7 +1,6 @@
 package template
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
@@ -49,17 +48,16 @@ func (req *GetTemplInfoRequest) Handler(ctx *gin.Context) {
 
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
-		common.WriteErrore(ctx, fmt.Errorf("got an error when try to get authentication info:%w", err), 0, "", 0, "")
+		common.WriteErrorf(ctx, 400, "got an error for esign authentication, error:%v", err)
 		return
 	}
-
 	restyResp, err := common.Client.R().SetHeaders(map[string]string{
 		"X-Tsign-Open-App-Id": oauth.AppId,
 		"X-Tsign-Open-Token":  oauth.Token,
 		"Content-Type":        oauth.ContentType,
 	}).SetResult(&parsedResp).Get(EsignSandBoxGetTemplInfoPath)
 
-	if common.WriteErrore(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
+	if common.WriteErrore(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
 		return
 	}
 
@@ -75,7 +73,7 @@ var GetTemplInfoRequestH = func() *router.Router {
 
 	r := router.New(
 		&GetTemplInfoRequest{},
-		router.Summary("查询e签宝官网模板信息。注意：此接口仅能查询官网企业主体下的模板信息。"),
+		router.Summary("获取e签宝官网模板信息。注意：此接口仅能查询官网企业主体下的模板信息。"),
 		router.Description(apiDesc()),
 		//router.Security(&security.Basic{}),
 		router.Responses(router.Response{

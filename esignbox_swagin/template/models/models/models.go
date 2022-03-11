@@ -10,6 +10,29 @@ import (
 	"github.com/jackc/pgtype"
 )
 
+type ComponentType string
+
+const (
+	ComponentType1  ComponentType = "1-单行文本"
+	ComponentType2  ComponentType = "2-数字"
+	ComponentType3  ComponentType = "3-日期"
+	ComponentType6  ComponentType = "6-签约区"
+	ComponentType8  ComponentType = "8-多行文本"
+	ComponentType11 ComponentType = "11-图片"
+)
+
+func (e *ComponentType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ComponentType(s)
+	case string:
+		*e = ComponentType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ComponentType: %T", src)
+	}
+	return nil
+}
+
 type FileStatus string
 
 const (
@@ -100,26 +123,27 @@ type AdminAccount struct {
 }
 
 type ContractFile struct {
-	FileID                string       `json:"fileID"`
-	FileName              string       `json:"fileName"`
-	AccountID             string       `json:"accountID"`
-	SimpleFormFields      pgtype.JSONB `json:"simpleFormFields"`
-	TemplateID            string       `json:"templateID"`
-	CreateTime            time.Time    `json:"createTime"`
-	FileStatus            FileStatus   `json:"fileStatus"`
-	DownloadUrl           string       `json:"downloadUrl"`
-	DownloadUrlExpireTime time.Time    `json:"downloadUrlExpireTime"`
-	PdfTotalPages         int32        `json:"pdfTotalPages"`
-	FileSize              int64        `json:"fileSize"`
-	FileBody              []byte       `json:"fileBody"`
+	FileID                string        `json:"fileID"`
+	FileName              string        `json:"fileName"`
+	TemplateID            string        `json:"templateID"`
+	CreatorID             string        `json:"creatorID"`
+	CreateTime            time.Time     `json:"createTime"`
+	FileStatus            FileStatus    `json:"fileStatus"`
+	DownloadUrl           string        `json:"downloadUrl"`
+	DownloadUrlExpireTime time.Time     `json:"downloadUrlExpireTime"`
+	PdfTotalPages         sql.NullInt32 `json:"pdfTotalPages"`
+	FileSize              sql.NullInt64 `json:"fileSize"`
+	SimpleFormFields      pgtype.JSONB  `json:"simpleFormFields"`
+	FileBody              []byte        `json:"fileBody"`
 }
 
 type ContractTemplate struct {
 	TemplateID            string             `json:"templateID"`
 	TemplateName          string             `json:"templateName"`
+	CreatorID             string             `json:"creatorID"`
 	CreateTime            time.Time          `json:"createTime"`
 	FileStatus            TemplateFileStatus `json:"fileStatus"`
-	DownloadUrl           sql.NullString     `json:"downloadUrl"`
+	DownloadUrl           string             `json:"downloadUrl"`
 	DownloadUrlExpireTime time.Time          `json:"downloadUrlExpireTime"`
 	FileSize              int64              `json:"fileSize"`
 	FileBody              []byte             `json:"fileBody"`
@@ -133,7 +157,10 @@ type CustomerAccount struct {
 }
 
 type StructComponent struct {
-	ComponentID   string       `json:"componentID"`
-	TemplateID    string       `json:"templateID"`
-	ComponentArgs pgtype.JSONB `json:"componentArgs"`
+	ComponentID      string        `json:"componentID"`
+	TemplateID       string        `json:"templateID"`
+	ComponentKey     string        `json:"componentKey"`
+	ComponentType    ComponentType `json:"componentType"`
+	ComponentContext pgtype.JSONB  `json:"componentContext"`
+	AllowEdit        bool          `json:"allowEdit"`
 }

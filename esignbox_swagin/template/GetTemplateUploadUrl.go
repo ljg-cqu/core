@@ -66,7 +66,7 @@ func (req *GetTemplUploadUrlRequest) Handler(ctx *gin.Context) {
 	}).SetBody(&req).
 		SetResult(&parsedResp).Post(EsignSandBoxUploadTemplUrl)
 
-	if common.WriteErrore(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
+	if common.WriteErrore(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
 		return
 	}
 

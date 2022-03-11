@@ -1,3 +1,6 @@
+package models
+
+var Schema = `
 -- customized types
 DROP TYPE IF EXISTS template_file_status;
 DROP TYPE IF EXISTS file_status;
@@ -45,7 +48,7 @@ CREATE TABLE IF NOT EXISTS contract_files
     file_id VARCHAR(64) PRIMARY KEY,
     file_name VARCHAR(64) NOT NULL,
     template_id VARCHAR(64) NOT NULL DEFAULT '',
-    creator_id VARCHAR(64) NOT NULL DEFAULT 'test_account_id',
+    account_id VARCHAR(64) NOT NULL DEFAULT 'test_account_id',
 
     create_time timestamptz NOT NULL DEFAULT now(),
     file_status file_status NOT NULL DEFAULT '2-文件上传已完成',
@@ -57,7 +60,7 @@ CREATE TABLE IF NOT EXISTS contract_files
     simple_form_fields JSONB NOT NULL,
     file_body BYTEA
 );
-CREATE INDEX IF NOT EXISTS "idx_contract_files_selector" ON "contract_files" ("creator_id","file_name", "template_id", "create_time");
+CREATE INDEX IF NOT EXISTS "idx_contract_files_selector" ON "contract_files" ("account_id","file_name", "template_id", "create_time");
 
 
 -- account and logs
@@ -95,13 +98,4 @@ CREATE TABLE IF NOT EXISTS account_operation_logs
     operation_time timestamptz NOT NULL,
     operation_info JSONB NOT NULL
 );
-CREATE INDEX IF NOT EXISTS "idx_account_operation_logs_selector" ON "account_operation_logs" ("account_id","operation_type", "operation_time");
-
-
-
-
-
-
-
-
-
+CREATE INDEX IF NOT EXISTS "idx_account_operation_logs_selector" ON "account_operation_logs" ("account_id","operation_type", "operation_time");`

@@ -11,6 +11,7 @@ import (
 	"github.com/long2ice/swagin/router"
 	"github.com/wI2L/fizz/markdown"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 )
 
@@ -58,38 +59,48 @@ func (req *UploadTemplFileRequest) Handler(ctx *gin.Context) {
 
 	// check context availability before work
 	if err := common.PgxPool.Ping(context.Background()); err != nil {
-		common.WriteErrorf(ctx, 400, "database is down! service refused, error:%v", err)
+		common.RespErrf(ctx, http.StatusInternalServerError, "database is down! service refused:%v", err)
 		return
 	}
 
 	parsedResp := UploadTemplFileResponse{}
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
-		common.WriteErrorf(ctx, 400, "got an error for esign authentication, error:%v", err)
+		common.RespErrf(ctx, http.StatusInternalServerError, "got an error for esign authentication:%v", err)
 		return
 	}
 
 	// read file stream
-	fileH, _ := ctx.FormFile("file")
+	fileH, err := ctx.FormFile("file")
+	if err != nil {
+		common.RespErrf(ctx, http.StatusBadRequest, "failed to receive file:%v", err)
+		return
+	}
+
+	if fileH == nil {
+		common.RespErrf(ctx, http.StatusBadRequest, "failed to receive file: file is nil")
+		return
+	}
+
 	fileName := fileH.Filename
 	fileSize := fileH.Size
 
 	ext := filepath.Ext(fileName)
 	if _, ok := supported_File_Formats[ext]; !ok {
-		common.WriteErrorf(ctx, 400, "error: bad file extension %q!", ext)
+		common.RespErrf(ctx, http.StatusBadRequest, "bad file extension %q!", ext)
 		return
 	}
 
 	file, err := fileH.Open()
 	defer file.Close()
 	if err != nil {
-		common.WriteErrorf(ctx, 400, "got and error when open file %q, error:%v", fileName, err)
+		common.RespErrf(ctx, http.StatusInternalServerError, "got and error when open file %q:%v", fileName, err)
 		return
 	}
 
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		common.WriteErrorf(ctx, 400, "failed to read %q file body, error:%v", fileName, err)
+		common.RespErrf(ctx, http.StatusInternalServerError, "failed to read %q file body:%v", fileName, err)
 		return
 	}
 
@@ -102,7 +113,7 @@ func (req *UploadTemplFileRequest) Handler(ctx *gin.Context) {
 
 	uploadUrlAndId, err := getTemplUploadUrl(fileName, contentMD5, contentType)
 	if err != nil {
-		common.WriteErrorf(ctx, 400, "got and error when request template upload url for %q, error:%v", fileName, err)
+		common.RespErrf(ctx, http.StatusInternalServerError, "got and error when request template upload url for %q:%v", fileName, err)
 		return
 	}
 
@@ -120,26 +131,30 @@ func (req *UploadTemplFileRequest) Handler(ctx *gin.Context) {
 	_ = restyResp
 
 	if err != nil {
-		common.WriteErrorf(ctx, 400, "failed to upload file %q to esign, error:%v", fileName, err)
+		common.RespErrf(ctx, http.StatusBadRequest, "failed to upload file %q to esign, error:%v", fileName, err)
 		return
 	}
 
 	if parsedResp.Code != 0 {
-		common.WriteErrorf(ctx, 400, "failed to upload file %q to esign, error code:%v, error message:%v", fileName, parsedResp.Code, parsedResp.Msg)
+		common.RespErrf(ctx, http.StatusBadRequest, "failed to upload file %q to esign, error code:%v, error message:%v", fileName, parsedResp.Code, parsedResp.Msg)
 		return
 	}
 
 	// issue a task to sync template upload status
 	// TODO:
 
-	models.New(common.PgxPool).CreateTemplate(context.Background(), &models.CreateTemplateParams{
+	_, err = models.New(common.PgxPool).CreateTemplate(context.Background(), &models.CreateTemplateParams{
 		TemplateID:   uploadUrlAndId.TemplateId,
 		TemplateName: fileName,
 		FileSize:     fileSize,
 		FileBody:     fileBytes,
 	})
+	if err != nil {
+		common.RespErrf(ctx, http.StatusInternalServerError, "failed to create template %q in database for template upload:%v", fileName, err)
+		return
+	}
 
-	common.WriteOK(ctx, UploadTemplFileResponseData{TemplateId: uploadUrlAndId.TemplateId, FileName: fileName})
+	common.RespSucc(ctx, UploadTemplFileResponseData{TemplateId: uploadUrlAndId.TemplateId, FileName: fileName})
 }
 
 var UploadPDFTemplFileRequestH = func() *router.Router {
@@ -157,10 +172,11 @@ var UploadPDFTemplFileRequestH = func() *router.Router {
 		router.ContentType(binding.MIMEMultipartPOSTForm),
 		router.Responses(router.Response{
 			"200": router.ResponseItem{
-				Model: UploadTemplFileResponseData{},
-			},
-			"400": router.ResponseItem{
-				Model: common.ErrorResp{},
+				Model: struct {
+					Code int                         `json:"code" binding:"required" default:"0"`
+					Msg  string                      `json:"msg" binding:"required" default:"ok"`
+					Data UploadTemplFileResponseData `json:"data"`
+				}{},
 			},
 		}),
 	)

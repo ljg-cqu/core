@@ -1,7 +1,6 @@
 package template
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
@@ -18,7 +17,7 @@ const (
 type AddFillControlRequest struct {
 	TemplateId string `uri:"templateId" binding:"required" json:"templateId" description:"模板id" default:"c4d4fe1b48184ba28982f68bf2c7bf25"`
 
-	Body []StructComponent `form:"structComponents" binding:"required" json:"structComponents" description:"添加填写控件请求参数列表"`
+	StructComponents []StructComponent `form:"structComponents" json:"structComponent" description:"必须。添加填写控件请求参数列表"`
 }
 
 type StructComponent struct {
@@ -64,7 +63,7 @@ func (req *AddFillControlRequest) Handler(ctx *gin.Context) {
 	parsedResp := AddFillControlResponse{}
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
-		common.WriteErrore(ctx, fmt.Errorf("got an error when try to get authentication info:%w", err), 0, "", 0, "")
+		common.WriteErrorf(ctx, 400, "got an error for esign authentication, error:%v", err)
 		return
 	}
 
@@ -75,17 +74,9 @@ func (req *AddFillControlRequest) Handler(ctx *gin.Context) {
 	}).SetBody(&req).
 		SetResult(&parsedResp).Post("/v1/docTemplates/" + req.TemplateId + "/components")
 
-	if err != nil {
-		common.WriteErrorf(ctx, 400, "got an error when try to delete fill control, error:%v", err)
+	if common.WriteErrore(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
 		return
 	}
-
-	if parsedResp.Code != 0 {
-		common.WriteErrorf(ctx, 400, "got an error when try to delete fill control, code:%v, message:%v", parsedResp.Code, parsedResp.Msg)
-		return
-	}
-
-	_ = restyResp
 
 	common.WriteOK(ctx, AddFillControlResponseData{parsedResp.Data})
 }

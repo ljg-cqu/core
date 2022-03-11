@@ -15,17 +15,17 @@ const (
 
 // https://open.esign.cn/doc/detail?id=opendoc%2Fsaas_api%2Fmmrbd6&namespace=opendoc%2Fsaas_api
 
-type QueryTemplUploadStatusRequest struct {
+type GetTemplUploadStatusRequest struct {
 	TemplateId string `uri:"templateId" binding:"required" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID."`
 }
 
-type QueryTemplUploadStatusResponse struct {
-	Code int                                `json:"errCode" binding:"required" description:"业务码，0表示成功"`
-	Msg  string                             `json:"message" description:"信息"`
-	Data QueryTemplUploadStatusResponseData `json:"data" description:"业务信息"`
+type GetTemplUploadStatusResponse struct {
+	Code int                              `json:"errCode" binding:"required" description:"业务码，0表示成功"`
+	Msg  string                           `json:"message" description:"信息"`
+	Data GetTemplUploadStatusResponseData `json:"data" description:"业务信息"`
 }
 
-type QueryTemplUploadStatusResponseData struct {
+type GetTemplUploadStatusResponseData struct {
 	TemplateId         string `json:"templateId" binding:"required" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID"`
 	TemplateName       string `json:"templateName" binding:"required" default:"商贷通用收入证明.pdf" description:"模板名称"`
 	TemplateFileStatus int    `json:"templateFileStatus" validate:"oneof=0,1,2,3" binding:"required" enum:"0,1,2,3" description:"模板文件上传状态。0-未上传;1-未转换成PDF; 2-已上传成功; 3-已转换成PDF"` // todo: check enum
@@ -38,8 +38,8 @@ type QueryTemplUploadStatusResponseData struct {
 
 // TODO: save file to db
 
-func (req *QueryTemplUploadStatusRequest) Handler(ctx *gin.Context) {
-	parsedResp := QueryTemplUploadStatusResponse{}
+func (req *GetTemplUploadStatusRequest) Handler(ctx *gin.Context) {
+	parsedResp := GetTemplUploadStatusResponse{}
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
 		common.WriteError(ctx, 400, fmt.Sprintf("got an error when try to get authentication info:%w", err))
@@ -52,14 +52,14 @@ func (req *QueryTemplUploadStatusRequest) Handler(ctx *gin.Context) {
 		"Content-Type":        oauth.ContentType,
 	}).SetResult(&parsedResp).Get("/v1/docTemplates/" + req.TemplateId + "/getBaseInfo")
 
-	if common.WriteErrore(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
+	if common.WriteErrore(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
 		return
 	}
 
 	common.WriteOK(ctx, parsedResp.Data)
 }
 
-var QueryTemplUploadStatusRequestH = func() *router.Router {
+var GetTemplUploadStatusRequestH = func() *router.Router {
 	var apiDesc = func() string {
 		builder := markdown.Builder{}
 		builder.P("官方文档：")
@@ -67,13 +67,13 @@ var QueryTemplUploadStatusRequestH = func() *router.Router {
 	}
 
 	r := router.New(
-		&QueryTemplUploadStatusRequest{},
-		router.Summary("查询模板文件上传状态."),
+		&GetTemplUploadStatusRequest{},
+		router.Summary("获取模板文件上传状态."),
 		router.Description(apiDesc()),
 		//router.Security(&security.Basic{}),
 		router.Responses(router.Response{
 			"200": router.ResponseItem{
-				Model: QueryTemplUploadStatusResponseData{},
+				Model: GetTemplUploadStatusResponseData{},
 			},
 			"400": router.ResponseItem{
 				Model: common.ErrorResp{},

@@ -1,7 +1,6 @@
 package template
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
@@ -34,7 +33,7 @@ func (req *DeleteFillControlRequest) Handler(ctx *gin.Context) {
 	parsedResp := _DeleteFillControlResponse{}
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
-		common.WriteErrore(ctx, fmt.Errorf("got an error when try to get authentication info:%w", err), 0, "", 0, "")
+		common.WriteErrorf(ctx, 400, "got an error for esign authentication, error:%v", err)
 		return
 	}
 
@@ -42,8 +41,7 @@ func (req *DeleteFillControlRequest) Handler(ctx *gin.Context) {
 		"X-Tsign-Open-App-Id": oauth.AppId,
 		"X-Tsign-Open-Token":  oauth.Token,
 		"Content-Type":        oauth.ContentType,
-	}).SetBody(&req).
-		SetResult(&parsedResp).Delete("/v1/docTemplates/" + req.TemplateId + "/components/" + req.IDs)
+	}).SetResult(&parsedResp).Delete("/v1/docTemplates/" + req.TemplateId + "/components/" + req.IDs)
 	if err != nil {
 		common.WriteErrorf(ctx, 400, "got an error when try to delete fill control, error:%v", err)
 		return

@@ -32,7 +32,7 @@ func (req *GetTokenRequest) Handler(ctx *gin.Context) {
 		"grantType": GrantType,
 	}).SetResult(&parsedResp).Get(EsignSandBoxGetTokenPath)
 
-	if common.WriteErrore(ctx, err, restyResp.RawResponse.StatusCode, restyResp.RawResponse.Status, parsedResp.Code, parsedResp.Msg) {
+	if common.WriteErrore(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
 		return
 	}
 

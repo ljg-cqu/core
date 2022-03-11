@@ -7,8 +7,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/template"
-	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/ljg-cqu/core/middleware"
+	"github.com/ljg-cqu/core/postgres"
 	"github.com/long2ice/swagin"
 	"io/ioutil"
 )
@@ -20,6 +20,14 @@ const (
 func main() {
 	client := resty.New().SetDebug(true).SetBaseURL(EsignSandBoxHost)
 	common.Client = client
+	common.PgxPool = postgres.PgxPool(postgres.TestDBAliConnStr)
+
+	//// apply DB migration before Client can work as expected
+	//_, err := common.PgxPool.Exec(context.Background(), models.Schema)
+	//if err != nil {
+	//	log.Printf("failed to to do DB migration for gue queue on top of PostgreSQL:%+v", err)
+	//	os.Exit(1)
+	//}
 
 	// Use customize Gin engine
 	r := gin.New()
@@ -63,29 +71,30 @@ func main() {
 		"admin": "admin",
 	}))
 
-	_token := app.Group("/esign", swagin.Tags("e签宝OAuth2.0鉴权接口"))
-	_token.GET("/token", token.GetTokenRequestH())
+	//_token := app.Group("/esign", swagin.Tags("e签宝OAuth2.0鉴权接口"))
+	//_token.POST("/token", token.GetTokenRequestH())
 
 	contractTemplate := app.Group("/contractTemplate", swagin.Tags(" PDF合同模板接口（集成e签宝）"))
 	{
 		contractTemplate.POST("/upload", template.UploadPDFTemplFileRequestH())
 		//contractTemplate.POST("/uploadUrl", template.GetTemplUploadUrlRequestH())
-		contractTemplate.DELETE("/:templateId/fillControls/:ids", template.DeleteFillControlRequestH())
-		contractTemplate.POST("/:templateId/fillControls", template.AddFillControlRequestH())
+		//contractTemplate.POST("/fillControls//:templateId/:ids", template.DeleteFillControlRequestH())
+		//contractTemplate.POST("/fillControls/:templateId", template.AddFillControlRequestH())
 		contractTemplate.POST("/fill", template.FillTemplateContentRequestH())
 
-		contractTemplate.GET("/:templateId/uploadStatus", template.QueryTemplUploadStatusRequestH())
+		//contractTemplate.POST("/uploadStatus/:templateId", template.GetTemplUploadStatusRequestH())
 		//contractTemplate.GET("/officialTemplateInfo", template.GetTemplInfoRequestH())
-		contractTemplate.GET("/:templateId/details", template.QueryTemplDetailsRequestH())
-
+		contractTemplate.POST("/details/:templateId", template.GetTemplDetailsRequestH())
+		contractTemplate.POST("/details/list", template.GetTemplListRequestH())
 	}
 
 	contractFile := app.Group("/contractFile", swagin.Tags("PDF合同文件接口（集成e签宝）"))
-	contractFile.GET("/:fileId/details", template.QueryPdfFileDetailsRequestH())
+	contractFile.POST("/details/:fileId", template.GetPdfFileDetailsRequestH())
+	contractFile.POST("/details/list", template.GetPdfFileDetailsListRequestH())
 
 	port := ":8085"
 
-	fmt.Printf("Now you can visit http://127.0.0.1%v/docs, http://127.0.0.1%v/redoc or http://127.0.0.1%v/rapidoc to see the api docs. Have fun!", port, port, port)
+	fmt.Printf("Now you can visit http://127.0.0.1%v/docs, http://127.0.0.1%v/redoc or http://127.0.0.1%v/rapidoc to see the api docs. Have fun!\n\n", port, port, port)
 	if err := app.Run(port); err != nil {
 		panic(err)
 	}

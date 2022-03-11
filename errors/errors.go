@@ -124,8 +124,8 @@ type Error interface {
 
 	WithMsg(m string) *MyError
 	WithMsgAppend(m string) *MyError
-	WithMsgf(format string, a ...any) *MyError
-	WithMsgfAppend(format string, a ...any) *MyError
+	WithMsgf(format string, a ...interface{}) *MyError
+	WithMsgfAppend(format string, a ...interface{}) *MyError
 	WithTag(t ErrorTag) *MyError
 	WithTags(ts []ErrorTag) *MyError
 	WithErrType(t ErrorType) *MyError
@@ -197,7 +197,7 @@ func NewWithMsg(msg string) *MyError {
 	return e
 }
 
-func NewWithMsgf(format string, a ...any) *MyError {
+func NewWithMsgf(format string, a ...interface{}) *MyError {
 	msg := fmt.Sprintf(format, a...)
 	e := &MyError{}
 	e.ErrMsg = msg
@@ -396,7 +396,7 @@ func (e *MyError) WithMsgAppend(m string) *MyError {
 	return e
 }
 
-func (e *MyError) WithMsgf(format string, a ...any) *MyError {
+func (e *MyError) WithMsgf(format string, a ...interface{}) *MyError {
 	if e == nil {
 		println("an nil error is not allowed to access")
 		os.Exit(1)
@@ -405,7 +405,7 @@ func (e *MyError) WithMsgf(format string, a ...any) *MyError {
 	return e
 }
 
-func (e *MyError) WithMsgfAppend(format string, a ...any) *MyError {
+func (e *MyError) WithMsgfAppend(format string, a ...interface{}) *MyError {
 	if e == nil {
 		println("an nil error is not allowed to access")
 		os.Exit(1)

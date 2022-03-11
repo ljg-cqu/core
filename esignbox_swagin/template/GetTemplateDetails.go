@@ -1,12 +1,14 @@
 package template
 
 import (
+	"fmt"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/long2ice/swagin/router"
-	"github.com/pkg/errors"
 	"github.com/wI2L/fizz/markdown"
+	"net/http"
 )
 
 const (
@@ -15,17 +17,17 @@ const (
 
 // https://open.esign.cn/doc/detail?id=opendoc%2Fsaas_api%2Fviygk4&namespace=opendoc%2Fsaas_api
 
-type QueryTemplDetailsRequest struct {
-	TemplateId string `uri:"templateId" binding:"required" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID, 该参数需放在请求地址里面"`
+type GetTemplDetailsRequest struct {
+	TemplateId string `uri:"templateId" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID, 该参数需放在请求地址里面"`
 }
 
-type QueryTemplDetailsResponse struct {
-	Code int                           `json:"code" binding:"required"  description:"业务码，0表示成功"`
-	Msg  string                        `json:"message" description:"信息"`
-	Data QueryTemplDetailsResponseData `json:"data" description:"业务信息"`
+type GetTemplDetailsResponse struct {
+	Code int                         `json:"code" binding:"required"  description:"业务码，0表示成功"`
+	Msg  string                      `json:"message" description:"信息"`
+	Data GetTemplDetailsResponseData `json:"data" description:"业务信息"`
 }
 
-type QueryTemplDetailsResponseData struct {
+type GetTemplDetailsResponseData struct {
 	TemplateId       string             `json:"templateId" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID"`
 	TemplateName     string             `json:"templateName" binding:"required" default:"商贷通用收入证明.pdf" description:"模板名称"`
 	TemplateType     int                `json:"templateType" enum:"3" description:"固定值 3"` // todo:check enum
@@ -52,19 +54,18 @@ type _Context struct {
 	Ext     string `json:"ext" enum:"imgType,page,signRequirements,qiFeng,units,signDatePos,fillLengthLimit" description:"扩展字段，用于支持一些扩展功能支持以下字段：imgType：图片类型；page：页码，用于签署区，单页签署区为独立数字；骑缝章时用于标明骑缝章跨度，如：1-5；signRequirements：签署要求，逗号分隔 1-企业章 2-经办人 3-法定代表人章；qiFeng：是否骑缝章签署，true - 骑缝章，false - 非骑缝章；units：暂无用途；signDatePos：签署区日期，当签署区设置了签署时间时，用于时间的坐标位置，如{\"x\":30.8,\"y\":724.01,\"page\":1}；fillLengthLimit：控件填充的限制长度（限制填充的字数），用于单行/多行文本。"`
 }
 
-func (req *QueryTemplDetailsRequest) Handler(ctx *gin.Context) {
-	data, err := queryTemplDetails(req.TemplateId)
-	if err != nil {
-		common.WriteErrorf(ctx, 400, "got an error for query template %q details, error:%v", req.TemplateId, err)
+func (req *GetTemplDetailsRequest) Handler(ctx *gin.Context) {
+	data, errObj := GetTemplDetails(req.TemplateId)
+	if errObj != nil {
+		common.RespErrObj(ctx, errObj)
 		return
 	}
 
-	// TODO: save file to db
-
-	common.WriteOK(ctx, data)
+	// todo: return account-id and name ...
+	common.RespSucc(ctx, data)
 }
 
-var QueryTemplDetailsRequestH = func() *router.Router {
+var GetTemplDetailsRequestH = func() *router.Router {
 	var apiDesc = func() string {
 		builder := markdown.Builder{}
 		builder.P("官方文档：")
@@ -72,16 +73,17 @@ var QueryTemplDetailsRequestH = func() *router.Router {
 	}
 
 	r := router.New(
-		&QueryTemplDetailsRequest{},
-		router.Summary("查询模板文件详情."),
+		&GetTemplDetailsRequest{},
+		router.Summary("获取模板文件详情."),
 		router.Description(apiDesc()),
 		//router.Security(&security.Basic{}),
 		router.Responses(router.Response{
 			"200": router.ResponseItem{
-				Model: QueryTemplDetailsResponseData{},
-			},
-			"400": router.ResponseItem{
-				Model: common.ErrorResp{},
+				Model: struct {
+					Code int                          `json:"code" binding:"required" default:"0"`
+					Msg  string                       `json:"msg" binding:"required" default:"ok"`
+					Data GetTemplDetailsResponseData_ `json:"data"`
+				}{},
 			},
 		}),
 	)
@@ -89,28 +91,56 @@ var QueryTemplDetailsRequestH = func() *router.Router {
 	return r
 }
 
-func queryTemplDetails(templeId string) (*QueryTemplDetailsResponseData, error) {
-	parsedResp := QueryTemplDetailsResponse{}
+type GetTemplDetailsResponseData_ struct {
+	TemplateId       string             `json:"templateId" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID"`
+	TemplateName     string             `json:"templateName" binding:"required" default:"商贷通用收入证明.pdf" description:"模板名称"`
+	DownloadUrl      string             `json:"DownloadUrl" binding:"required" description:"模板文件下载链接，有效期60分钟。"`
+	CreateTime       int64              `json:"createTime" binding:"required" description:"创建时间，Unix时间戳（毫秒级）"`
+	CreatorID        string             `json:"creatorID" binding:"required" description:"创建者账户ID"`
+	CreatorName      string             `json:"creatorName" binding:"required" description:"创建者姓名"`
+	StructComponents []_StructComponent `json:"structComponents" description:"文件模板中的填写控件列表"`
+}
+
+func GetTemplDetails(templeId string) (data *GetTemplDetailsResponseData_, errObj *common.RespObj) {
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
-		return nil, err
+		return nil, &common.RespObj{
+			Code: http.StatusNetworkAuthenticationRequired,
+			Msg:  fmt.Sprintf("got an error when try to get authentication info:%v", err),
+		}
 	}
 
+	//ctx := context.Background()
+	//tempAccInfo, err := models.New(common.PgxPool).GetTemplateCreatorInfo(ctx, templeId)
+	//if err != nil {
+	//	return nil, &common.RespObj{
+	//		Code: http.StatusInternalServerError,
+	//		Msg:  fmt.Sprintf("fail to access database:%v", err),
+	//	}
+	//}
+
+	parsedResp := GetTemplDetailsResponse{}
 	restyResp, err := common.Client.R().SetHeaders(map[string]string{
 		"X-Tsign-Open-App-Id": oauth.AppId,
 		"X-Tsign-Open-Token":  oauth.Token,
 		"Content-Type":        oauth.ContentType,
 	}).SetResult(&parsedResp).Get("/v1/docTemplates/" + templeId)
 
-	_ = restyResp
-
-	if err != nil {
-		return nil, err
+	errObj = common.ErrObjFromEsignRequest(restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg})
+	if errObj != nil {
+		return
 	}
 
-	if parsedResp.Code != 0 {
-		return nil, errors.Errorf("error code:%v, error message:%v", parsedResp.Code, parsedResp.Msg)
-	}
+	var resp = GetTemplDetailsResponseData_{}
+	resp.TemplateId = parsedResp.Data.TemplateId
+	resp.TemplateName = parsedResp.Data.TemplateName
+	resp.DownloadUrl = parsedResp.Data.DownloadUrl
+	resp.CreateTime = parsedResp.Data.CreateTime
+	//_ = tempAccInfo // todo: use true account
 
-	return &parsedResp.Data, nil
+	resp.CreatorID = gofakeit.UUID()
+	resp.CreatorName = gofakeit.Name()
+	resp.StructComponents = parsedResp.Data.StructComponents
+
+	return &resp, nil
 }
