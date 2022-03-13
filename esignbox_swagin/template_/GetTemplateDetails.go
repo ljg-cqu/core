@@ -1,4 +1,4 @@
-package template
+package template_
 
 import (
 	"fmt"

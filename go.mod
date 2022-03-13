@@ -24,6 +24,8 @@ require (
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.0
+	github.com/go-playground/locales v0.14.0
+	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang-jwt/jwt/v4 v4.3.0
@@ -80,8 +82,6 @@ require (
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/spec v0.20.4 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/goccy/go-json v0.9.0 // indirect
 	github.com/goccy/go-yaml v1.8.1 // indirect
 	github.com/gofrs/flock v0.8.1 // indirect

@@ -7,7 +7,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/file_"
-	"github.com/ljg-cqu/core/esignbox_swagin/template"
+	"github.com/ljg-cqu/core/esignbox_swagin/template_"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/ljg-cqu/core/middleware"
 	"github.com/ljg-cqu/core/postgres"
@@ -78,16 +78,16 @@ func main() {
 
 	contractTemplate := app.Group("/contractTemplate", swagin.Tags(" PDF合同模板接口（集成e签宝）"))
 	{
-		contractTemplate.POST("/upload", template.UploadPDFTemplFileRequestH())
+		contractTemplate.POST("/upload", template_.UploadPDFTemplFileRequestH())
 		//contractTemplate.POST("/uploadUrl", template.GetTemplUploadUrlRequestH())
 		//contractTemplate.POST("/fillControls//:templateId/:ids", template.DeleteFillControlRequestH())
 		//contractTemplate.POST("/fillControls/:templateId", template.AddFillControlRequestH())
-		contractTemplate.POST("/fill", template.FillTemplateContentRequestH())
+		contractTemplate.POST("/fill", template_.FillTemplateContentRequestH())
 
 		//contractTemplate.POST("/uploadStatus/:templateId", template.GetTemplUploadStatusRequestH())
 		//contractTemplate.GET("/officialTemplateInfo", template.GetTemplInfoRequestH())
-		contractTemplate.POST("/details/:templateId", template.GetTemplDetailsRequestH())
-		contractTemplate.POST("/details/list", template.GetTemplListRequestH())
+		contractTemplate.POST("/details/:templateId", template_.GetTemplDetailsRequestH())
+		contractTemplate.POST("/details/list", template_.GetTemplListRequestH())
 	}
 
 	contractFile := app.Group("/contractFile", swagin.Tags("PDF合同文件接口（集成e签宝）"))
