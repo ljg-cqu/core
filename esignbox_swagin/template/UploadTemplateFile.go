@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
-	"github.com/ljg-cqu/core/esignbox_swagin/template/models/models"
+	models2 "github.com/ljg-cqu/core/esignbox_swagin/models/models"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/ljg-cqu/core/utils"
 	"github.com/long2ice/swagin/router"
@@ -141,9 +141,9 @@ func (req *UploadTemplFileRequest) Handler(ctx *gin.Context) {
 	}
 
 	// issue a task to sync template upload status
-	// TODO:
+	// TODO: inert creator info
 
-	_, err = models.New(common.PgxPool).CreateTemplate(context.Background(), &models.CreateTemplateParams{
+	_, err = models2.New(common.PgxPool).CreateTemplate(context.Background(), &models2.CreateTemplateParams{
 		TemplateID:   uploadUrlAndId.TemplateId,
 		TemplateName: fileName,
 		FileSize:     fileSize,

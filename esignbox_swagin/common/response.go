@@ -72,7 +72,7 @@ func RespSucc(c *gin.Context, data interface{}) {
 	})
 }
 
-func Erre(ctx *gin.Context, rawResp *http.Response, respErr error, eError *EsignError) bool {
+func RespErre(ctx *gin.Context, rawResp *http.Response, respErr error, eError *EsignError) bool {
 	if rawResp.StatusCode != http.StatusOK {
 		RespErrf(ctx, rawResp.StatusCode, "got an error when request esign:%v", rawResp.Status)
 		return true

@@ -6,7 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
+	"github.com/ljg-cqu/core/esignbox_swagin/file_"
 	"github.com/ljg-cqu/core/esignbox_swagin/template"
+	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/ljg-cqu/core/middleware"
 	"github.com/ljg-cqu/core/postgres"
 	"github.com/long2ice/swagin"
@@ -71,8 +73,8 @@ func main() {
 		"admin": "admin",
 	}))
 
-	//_token := app.Group("/esign", swagin.Tags("e签宝OAuth2.0鉴权接口"))
-	//_token.POST("/token", token.GetTokenRequestH())
+	_token := app.Group("/esign", swagin.Tags("e签宝OAuth2.0鉴权接口"))
+	_token.POST("/token", token.GetTokenRequestH())
 
 	contractTemplate := app.Group("/contractTemplate", swagin.Tags(" PDF合同模板接口（集成e签宝）"))
 	{
@@ -89,8 +91,9 @@ func main() {
 	}
 
 	contractFile := app.Group("/contractFile", swagin.Tags("PDF合同文件接口（集成e签宝）"))
-	contractFile.POST("/details/:fileId", template.GetPdfFileDetailsRequestH())
-	contractFile.POST("/details/list", template.GetPdfFileDetailsListRequestH())
+	contractFile.POST("/details/:fileId", file_.GetPdfFileDetailsRequestH())
+	contractFile.POST("/details/list", file_.GetPdfFileDetailsListRequestH())
+	contractFile.POST("/merge/:fileIds", file_.MergeThenUploadFilesRequestH())
 
 	port := ":8085"
 

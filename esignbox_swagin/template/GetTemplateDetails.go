@@ -18,7 +18,7 @@ const (
 // https://open.esign.cn/doc/detail?id=opendoc%2Fsaas_api%2Fviygk4&namespace=opendoc%2Fsaas_api
 
 type GetTemplDetailsRequest struct {
-	TemplateId string `uri:"templateId" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID, 该参数需放在请求地址里面"`
+	TemplateId string `uri:"templateId" binding:"required" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID, 该参数需放在请求地址里面"`
 }
 
 type GetTemplDetailsResponse struct {
@@ -36,6 +36,8 @@ type GetTemplDetailsResponseData struct {
 	CreateTime       int64              `json:"createTime" description:"创建时间，Unix时间戳（毫秒级）"`
 	UpdatedTime      int64              `json:"updatedTime" binding:"required" description:"更新时间，Unix时间戳（毫秒级）"`
 	StructComponents []_StructComponent `json:"structComponents" type:"array" description:"文件模板中的填写控件列表"` // todo: check type
+	CreatorID        string             `json:"creatorID"`
+	CreatorName      string             `json:"creatorName"`
 }
 
 type _StructComponent struct {
@@ -80,9 +82,9 @@ var GetTemplDetailsRequestH = func() *router.Router {
 		router.Responses(router.Response{
 			"200": router.ResponseItem{
 				Model: struct {
-					Code int                          `json:"code" binding:"required" default:"0"`
-					Msg  string                       `json:"msg" binding:"required" default:"ok"`
-					Data GetTemplDetailsResponseData_ `json:"data"`
+					Code int                         `json:"code" binding:"required" default:"0"`
+					Msg  string                      `json:"msg" binding:"required" default:"ok"`
+					Data GetTemplDetailsResponseData `json:"data"`
 				}{},
 			},
 		}),
@@ -91,17 +93,7 @@ var GetTemplDetailsRequestH = func() *router.Router {
 	return r
 }
 
-type GetTemplDetailsResponseData_ struct {
-	TemplateId       string             `json:"templateId" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板ID"`
-	TemplateName     string             `json:"templateName" binding:"required" default:"商贷通用收入证明.pdf" description:"模板名称"`
-	DownloadUrl      string             `json:"DownloadUrl" binding:"required" description:"模板文件下载链接，有效期60分钟。"`
-	CreateTime       int64              `json:"createTime" binding:"required" description:"创建时间，Unix时间戳（毫秒级）"`
-	CreatorID        string             `json:"creatorID" binding:"required" description:"创建者账户ID"`
-	CreatorName      string             `json:"creatorName" binding:"required" description:"创建者姓名"`
-	StructComponents []_StructComponent `json:"structComponents" description:"文件模板中的填写控件列表"`
-}
-
-func GetTemplDetails(templeId string) (data *GetTemplDetailsResponseData_, errObj *common.RespObj) {
+func GetTemplDetails(templeId string) (data *GetTemplDetailsResponseData, errObj *common.RespObj) {
 	oauth, err := token.GetOauthInfo()
 	if err != nil {
 		return nil, &common.RespObj{
@@ -110,15 +102,6 @@ func GetTemplDetails(templeId string) (data *GetTemplDetailsResponseData_, errOb
 		}
 	}
 
-	//ctx := context.Background()
-	//tempAccInfo, err := models.New(common.PgxPool).GetTemplateCreatorInfo(ctx, templeId)
-	//if err != nil {
-	//	return nil, &common.RespObj{
-	//		Code: http.StatusInternalServerError,
-	//		Msg:  fmt.Sprintf("fail to access database:%v", err),
-	//	}
-	//}
-
 	parsedResp := GetTemplDetailsResponse{}
 	restyResp, err := common.Client.R().SetHeaders(map[string]string{
 		"X-Tsign-Open-App-Id": oauth.AppId,
@@ -126,21 +109,15 @@ func GetTemplDetails(templeId string) (data *GetTemplDetailsResponseData_, errOb
 		"Content-Type":        oauth.ContentType,
 	}).SetResult(&parsedResp).Get("/v1/docTemplates/" + templeId)
 
+	// TODO: use true creator info
+	_data := parsedResp.Data
+	_data.CreatorID = gofakeit.UUID()
+	_data.CreatorName = gofakeit.Name()
+
 	errObj = common.ErrObjFromEsignRequest(restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg})
 	if errObj != nil {
 		return
 	}
 
-	var resp = GetTemplDetailsResponseData_{}
-	resp.TemplateId = parsedResp.Data.TemplateId
-	resp.TemplateName = parsedResp.Data.TemplateName
-	resp.DownloadUrl = parsedResp.Data.DownloadUrl
-	resp.CreateTime = parsedResp.Data.CreateTime
-	//_ = tempAccInfo // todo: use true account
-
-	resp.CreatorID = gofakeit.UUID()
-	resp.CreatorName = gofakeit.Name()
-	resp.StructComponents = parsedResp.Data.StructComponents
-
-	return &resp, nil
+	return &_data, nil
 }

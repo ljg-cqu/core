@@ -1,4 +1,4 @@
-package template
+package file_
 
 import (
 	"fmt"
@@ -50,7 +50,7 @@ func (req *GetPdfFileDetailsRequest) Handler(ctx *gin.Context) {
 	//	"Content-Type":        oauth.ContentType,
 	//}).SetResult(&parsedResp).Get("/v1/files/" + req.FileId)
 	//
-	//if common.Erre(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
+	//if common.RespErre(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
 	//	return
 	//}
 	//common.RespSucc(ctx, parsedResp.Data)

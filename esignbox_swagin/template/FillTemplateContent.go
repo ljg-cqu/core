@@ -3,10 +3,11 @@ package template
 import (
 	"context"
 	"encoding/json"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
-	"github.com/ljg-cqu/core/esignbox_swagin/template/models/models"
+	"github.com/ljg-cqu/core/esignbox_swagin/models/models"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/long2ice/swagin/router"
 	"github.com/wI2L/fizz/markdown"
@@ -166,7 +167,7 @@ func (req *FillTemplateContentRequest) Handler(ctx *gin.Context) {
 	}).SetBody(&_req).
 		SetResult(&parsedResp).Post(EsignSandBoxFillTemplateContentUrl)
 
-	if common.Erre(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
+	if common.RespErre(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
 		return
 	}
 
@@ -179,7 +180,7 @@ func (req *FillTemplateContentRequest) Handler(ctx *gin.Context) {
 	_, err = models.New(common.PgxPool).CreateContractFile(context.Background(), &models.CreateContractFileParams{
 		FileID:           parsedResp.Data.FileId,
 		FileName:         parsedResp.Data.FileName,
-		AccountID:        "test_account", // todo: use true account
+		CreatorID:        gofakeit.UUID(), // todo: use true account
 		SimpleFormFields: pgtype.JSONB{Bytes: bytes, Status: pgtype.Present},
 		TemplateID:       req.TemplateId,
 		DownloadUrl:      parsedResp.Data.DownloadUrl,

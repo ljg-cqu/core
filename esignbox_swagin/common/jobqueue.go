@@ -1,7 +1,7 @@
 package common
 
 import (
-	"github.com/ljg-cqu/core/esignbox_swagin/template/models/models"
+	"github.com/ljg-cqu/core/esignbox_swagin/models/models"
 	"github.com/ljg-cqu/core/postgres_job"
 )
 

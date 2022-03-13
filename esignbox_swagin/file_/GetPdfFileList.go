@@ -1,10 +1,10 @@
-package template
+package file_
 
 import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
-	"github.com/ljg-cqu/core/esignbox_swagin/template/models/models"
+	"github.com/ljg-cqu/core/esignbox_swagin/models/models"
 	"github.com/long2ice/swagin/router"
 	"github.com/wI2L/fizz/markdown"
 	"net/http"
@@ -26,11 +26,15 @@ func (req *GetPdfFileDetailsListRequest) Handler(ctx *gin.Context) {
 
 	if len(contractFileIds) == 0 {
 		common.RespErrf(ctx, http.StatusNotFound, "Not Found")
+		common.RespSucc(ctx, []GetPdfFileDetailsResponseData{})
 		return
 	}
 
 	var fileDetailsList []GetPdfFileDetailsResponseData
 	for _, contractFileId := range contractFileIds {
+		if contractFileId == "" {
+			continue
+		}
 		detail, errObj := GetPdfFileDetails(contractFileId)
 		if errObj != nil {
 			common.RespErrObj(ctx, errObj)
@@ -52,7 +56,7 @@ var GetPdfFileDetailsListRequestH = func() *router.Router {
 
 	r := router.New(
 		&GetPdfFileDetailsListRequest{},
-		router.Summary("获取PDF文件详情列表."),
+		router.Summary("获取PDF文件列表."),
 		router.Description(apiDesc()),
 		//router.Security(&security.Basic{}),
 		router.Responses(router.Response{

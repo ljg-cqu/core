@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
-	"github.com/ljg-cqu/core/esignbox_swagin/template/models/models"
+	"github.com/ljg-cqu/core/esignbox_swagin/models/models"
 	"github.com/long2ice/swagin/router"
 	"net/http"
 )
@@ -74,12 +74,15 @@ func (req *GetTemplateListRequest) Handler(ctx *gin.Context) {
 	}
 
 	if len(contractTemplIds) == 0 {
-		common.RespErrf(ctx, http.StatusNotFound, "Not Found")
+		common.RespSucc(ctx, []GetTemplateListResponseData_{})
 		return
 	}
 
 	var templDetailsList []GetTemplateListResponseData_
 	for _, contractTemplId := range contractTemplIds {
+		if contractTemplId == "" {
+			continue
+		}
 		detail, errObj := GetTemplDetails(contractTemplId)
 		if errObj != nil {
 			common.RespErrObj(ctx, errObj)
@@ -102,14 +105,14 @@ func (req *GetTemplateListRequest) Handler(ctx *gin.Context) {
 var GetTemplListRequestH = func() *router.Router {
 	r := router.New(
 		&GetTemplateListRequest{},
-		router.Summary("获取模板文件详情列表"),
+		router.Summary("获取模板文件列表"),
 		//router.Security(&security.Basic{}),
 		router.Responses(router.Response{
 			"200": router.ResponseItem{
 				Model: struct {
 					Code int                            `json:"code" binding:"required" default:"0"`
 					Msg  string                         `json:"msg" binding:"required" default:"ok"`
-					Data []GetTemplDetailsResponseData_ `json:"data"`
+					Data []GetTemplateListResponseData_ `json:"data"`
 				}{},
 			},
 		}),
