@@ -12,13 +12,13 @@ import (
 
 var Json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-func PrintlnAsJson(pre string, v any) {
+func PrintlnAsJson(pre string, v interface{}) {
 	bytes, _ := json.MarshalIndent(v, "", "  ")
 	fmt.Println(pre)
 	fmt.Println(string(bytes))
 }
 
-func UnmarshalJsonFile(path string, a any) errors.Error {
+func UnmarshalJsonFile(path string, a interface{}) errors.Error {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return errors.NewWithMsgf("failed to read file:%v", err).WithTag(errors.ErrTagFileReadErr)

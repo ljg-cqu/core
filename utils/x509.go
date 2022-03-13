@@ -38,7 +38,7 @@ func ParseRSAPrivateKey(key []byte) (*rsa.PrivateKey, errors.Error) {
 		return nil, err
 	}
 
-	var parsedKey any
+	var parsedKey interface{}
 	var err error
 	if parsedKey, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
 		if parsedKey, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
