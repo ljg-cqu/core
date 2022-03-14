@@ -1,11 +1,16 @@
 package file_
 
 import (
+	"context"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgtype"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
+	"github.com/ljg-cqu/core/esignbox_swagin/models/models"
 	"github.com/ljg-cqu/core/utils"
 	"github.com/long2ice/swagin/router"
 	"net/http"
+
 	"strings"
 )
 
@@ -120,6 +125,21 @@ func (req *MergeThenUploadFilesRequest) Handler(ctx *gin.Context) {
 	//	common.RespErrf(ctx, http.StatusInternalServerError, "failed to create template %q in database for template upload:%v", fileName, err)
 	//	return
 	//}
+
+	// todo: norm doc type...
+	_, err := models.New(common.PgxPool).CreateContractFile(context.Background(), &models.CreateContractFileParams{
+		FileID:           uploadUrlAndId.FileId,
+		FileName:         mergeResult.joinName,
+		CreatorID:        gofakeit.UUID(),                               // todo: use true account
+		SimpleFormFields: pgtype.JSONB{Bytes: nil, Status: pgtype.Null}, // TODO: improvement
+		TemplateID:       "",                                            // todo: multiple id
+		DownloadUrl:      "",                                            // todo:
+		DocType:          models.DocType("0-合同"),                        // todo:
+	})
+	if err != nil {
+		common.RespErrf(ctx, http.StatusInternalServerError, "failed to merge files %q:%v", mergeResult.joinName, err)
+		return
+	}
 
 	common.RespSucc(ctx, MergeThenUploadFilesResponseData{FileId: uploadUrlAndId.FileId, FileName: mergeResult.joinName})
 }

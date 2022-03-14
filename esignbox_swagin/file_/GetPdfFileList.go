@@ -14,20 +14,39 @@ import (
 
 type GetPdfFileDetailsListRequest struct {
 	//FileId string `uri:"fileId" binding:"required" default:"ede1fa4504954c29ad210637c15f42cf" description:"文件ID"`
+	DocType string `uri:"docType" default:"0-合同" description:"文档类型：0-合同, 1-协议, 2-订单. 若不指定，将返回所有模板列表"`
 }
 
 func (req *GetPdfFileDetailsListRequest) Handler(ctx *gin.Context) {
 	queries := models.New(common.PgxPool)
-	contractFileIds, err := queries.ListContractFileIds(context.Background())
-	if err != nil {
-		common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract file ids from db, error:%v", err)
-		return
-	}
 
-	if len(contractFileIds) == 0 {
-		common.RespErrf(ctx, http.StatusNotFound, "Not Found")
-		common.RespSucc(ctx, []GetPdfFileDetailsResponseData{})
-		return
+	var contractFileIds []string
+	var err error
+
+	if req.DocType == "" {
+		contractFileIds, err = queries.ListContractFileIds(context.Background())
+		if err != nil {
+			common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract file ids from db, error:%v", err)
+			return
+		}
+
+		if len(contractFileIds) == 0 {
+			common.RespErrf(ctx, http.StatusNotFound, "Not Found")
+			common.RespSucc(ctx, []GetPdfFileDetailsResponseData{})
+			return
+		}
+	} else {
+		contractFileIds, err = queries.ListContractFileIdsByDocType(context.Background(), models.DocType(req.DocType))
+		if err != nil {
+			common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract file ids from db, error:%v", err)
+			return
+		}
+
+		if len(contractFileIds) == 0 {
+			common.RespErrf(ctx, http.StatusNotFound, "Not Found")
+			common.RespSucc(ctx, []GetPdfFileDetailsResponseData{})
+			return
+		}
 	}
 
 	var fileDetailsList []GetPdfFileDetailsResponseData
@@ -56,7 +75,7 @@ var GetPdfFileDetailsListRequestH = func() *router.Router {
 
 	r := router.New(
 		&GetPdfFileDetailsListRequest{},
-		router.Summary("获取PDF文件列表."),
+		router.Summary("获取PDF文件列表.docType文档类型：0-合同, 1-协议, 2-订单. 若不指定，将返回所有模板列表"),
 		router.Description(apiDesc()),
 		//router.Security(&security.Basic{}),
 		router.Responses(router.Response{

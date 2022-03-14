@@ -18,6 +18,7 @@ const (
 type GetTemplateListRequest struct {
 	//PageNum  int `query:"pageNum" description:"查询页码，不传默认第1页，起始值：1"`
 	//PageSize int `query:"pageSize" description:"分页大小，不传默认10条，最大值：100"`
+	DocType string `uri:"docType" default:"0-合同" description:"文档类型：0-合同, 1-协议, 2-订单. 若不指定，将返回所有模板列表"`
 }
 
 //type GetTemplListResponse struct {
@@ -61,21 +62,38 @@ type GetTemplateListResponseData_ struct {
 	CreateTime   int64  `json:"createTime" binding:"required" description:"创建时间，Unix时间戳（毫秒级）"`
 	CreatorID    string `json:"creatorID" binding:"required" description:"创建者账户ID"`
 	CreatorName  string `json:"creatorName" binding:"required" description:"创建者姓名"`
+	DocType      string `json:"docType" default:"0-合同" description:"文档类型：0-合同, 1-协议, 2-订单."`
 }
 
 // Query template list from database
 
 func (req *GetTemplateListRequest) Handler(ctx *gin.Context) {
 	queries := models.New(common.PgxPool)
-	contractTemplIds, err := queries.ListContractTemplateIds(context.Background())
-	if err != nil {
-		common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract template ids from db, error:%v", err)
-		return
-	}
+	var contractTemplIds []string
+	var err error
+	// todo: return type from db
+	if req.DocType == "" {
+		contractTemplIds, err = queries.ListContractTemplateIds(context.Background())
+		if err != nil {
+			common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract template ids from db, error:%v", err)
+			return
+		}
 
-	if len(contractTemplIds) == 0 {
-		common.RespSucc(ctx, []GetTemplateListResponseData_{})
-		return
+		if len(contractTemplIds) == 0 {
+			common.RespSucc(ctx, []GetTemplateListResponseData_{})
+			return
+		}
+	} else {
+		contractTemplIds, err = queries.ListContractTemplateIdsByDocType(context.Background(), models.DocType(req.DocType))
+		if err != nil {
+			common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract template ids from db, error:%v", err)
+			return
+		}
+
+		if len(contractTemplIds) == 0 {
+			common.RespSucc(ctx, []GetTemplateListResponseData_{})
+			return
+		}
 	}
 
 	var templDetailsList []GetTemplateListResponseData_
@@ -95,6 +113,7 @@ func (req *GetTemplateListRequest) Handler(ctx *gin.Context) {
 			CreateTime:   detail.CreateTime,
 			CreatorID:    detail.CreatorID,
 			CreatorName:  detail.CreatorName,
+			DocType:      req.DocType,
 		})
 	}
 
@@ -105,7 +124,7 @@ func (req *GetTemplateListRequest) Handler(ctx *gin.Context) {
 var GetTemplListRequestH = func() *router.Router {
 	r := router.New(
 		&GetTemplateListRequest{},
-		router.Summary("获取模板文件列表"),
+		router.Summary("获取模板文件列表. docType文档类型：0-合同, 1-协议, 2-订单. 若不指定，将返回所有模板列表"),
 		//router.Security(&security.Basic{}),
 		router.Responses(router.Response{
 			"200": router.ResponseItem{

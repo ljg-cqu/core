@@ -1,6 +1,6 @@
 -- name: CreateTemplate :one
-INSERT INTO contract_templates (template_id, template_name, file_size, file_body)
-VALUES ($1, $2, $3, $4)
+INSERT INTO contract_templates (template_id, template_name, doc_type, creator_id, file_size, file_body)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING template_id;
 
 -- name: GetTemplate :one
@@ -14,8 +14,18 @@ WHERE template_id = $1 LIMIT 1;
 -- name: ListContractTemplateIds :many
 SELECT template_id FROM contract_templates;
 
+-- name: ListContractTemplateIdsByDocType :many
+SELECT template_id FROM contract_templates
+WHERE doc_type = $1
+ORDER BY template_name;
+
 -- name: ListContractTemplates :many
 SELECT * FROM contract_templates
+ORDER BY template_name;
+
+-- name: ListContractTemplatesByDocType :many
+SELECT * FROM contract_templates
+WHERE doc_type = $1
 ORDER BY template_name;
 
 -- name: UpdateContractTemplateDownloadUrl :exec
@@ -33,8 +43,8 @@ WHERE template_id = $1;
 
 
 -- name: CreateContractFile :one
-INSERT INTO contract_files (file_id, file_name, creator_id, simple_form_fields, template_id, download_url)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO contract_files (file_id, file_name, doc_type, creator_id, simple_form_fields, template_id, download_url)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING file_id;
 
 -- name: GetContractFile :one
@@ -43,6 +53,12 @@ WHERE file_id = $1 LIMIT 1;
 
 -- name: ListContractFileIds :many
 SELECT file_id FROM contract_files;
+
+-- name: ListContractFileIdsByDocType :many
+SELECT file_id FROM contract_files
+WHERE doc_type = $1
+ORDER BY file_name;
+
 
 -- name: ListContractFiles :many
 SELECT * FROM contract_files

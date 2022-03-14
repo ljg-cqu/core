@@ -38,6 +38,7 @@ var supported_File_Formats = map[string]struct{}{
 }
 
 type UploadFileRequest struct {
+	DocType string `uri:"docType" default:"0-合同" description:"文档类型：0-合同, 1-协议, 2-订单.`
 	//File *multipart.FileHeader `form:"file" binding:"required" description:"文件名称必须带扩展名:.pdf"`
 }
 
@@ -154,7 +155,7 @@ var UploadFileRequestH = func() *router.Router {
 
 	r := router.New(
 		&UploadFileRequest{},
-		router.Summary("模板文件上传. 注意：因UI界面限制，请用Postman、curl或其他工具，通过表单上传模板文件。"),
+		router.Summary("模板文件上传. docType文档类型：0-合同, 1-协议, 2-订单. 注意：因UI界面限制，请用Postman、curl或其他工具，通过表单上传模板文件。"),
 		router.Description(apiDesc()),
 		//router.Security(&security.Basic{}),
 		router.ContentType(binding.MIMEMultipartPOSTForm),

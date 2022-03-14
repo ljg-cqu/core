@@ -76,24 +76,24 @@ func main() {
 	_token := app.Group("/esign", swagin.Tags("e签宝OAuth2.0鉴权接口"))
 	_token.POST("/token", token.GetTokenRequestH())
 
-	contractTemplate := app.Group("/contractTemplate", swagin.Tags(" PDF合同模板接口（集成e签宝）"))
+	esignTemplate := app.Group("/esignTemplate", swagin.Tags(" PDF模板接口（集成e签宝）"))
 	{
-		contractTemplate.POST("/upload", template_.UploadPDFTemplFileRequestH())
-		//contractTemplate.POST("/uploadUrl", template.GetTemplUploadUrlRequestH())
-		//contractTemplate.POST("/fillControls//:templateId/:ids", template.DeleteFillControlRequestH())
-		//contractTemplate.POST("/fillControls/:templateId", template.AddFillControlRequestH())
-		contractTemplate.POST("/fill", template_.FillTemplateContentRequestH())
+		esignTemplate.POST("/upload/:docType", template_.UploadPDFTemplFileRequestH())
+		//esignTemplate.POST("/uploadUrl", template.GetTemplUploadUrlRequestH())
+		//esignTemplate.POST("/fillControls//:templateId/:ids", template.DeleteFillControlRequestH())
+		//esignTemplate.POST("/fillControls/:templateId", template.AddFillControlRequestH())
+		esignTemplate.POST("/fill/:docType", template_.FillTemplateContentRequestH())
 
-		//contractTemplate.POST("/uploadStatus/:templateId", template.GetTemplUploadStatusRequestH())
-		//contractTemplate.GET("/officialTemplateInfo", template.GetTemplInfoRequestH())
-		contractTemplate.POST("/details/:templateId", template_.GetTemplDetailsRequestH())
-		contractTemplate.POST("/details/list", template_.GetTemplListRequestH())
+		//esignTemplate.POST("/uploadStatus/:templateId", template.GetTemplUploadStatusRequestH())
+		//esignTemplate.GET("/officialTemplateInfo", template.GetTemplInfoRequestH())
+		esignTemplate.POST("/details/:templateId", template_.GetTemplDetailsRequestH())
+		esignTemplate.POST("/list/:docType", template_.GetTemplListRequestH())
 	}
 
-	contractFile := app.Group("/contractFile", swagin.Tags("PDF合同文件接口（集成e签宝）"))
-	contractFile.POST("/details/:fileId", file_.GetPdfFileDetailsRequestH())
-	contractFile.POST("/details/list", file_.GetPdfFileDetailsListRequestH())
-	contractFile.POST("/merge/:fileIds", file_.MergeThenUploadFilesRequestH())
+	esignFile := app.Group("/esignFile", swagin.Tags("PDF文件接口（集成e签宝）"))
+	esignFile.POST("/details/:fileId", file_.GetPdfFileDetailsRequestH())
+	esignFile.POST("/list/:docType", file_.GetPdfFileDetailsListRequestH())
+	esignFile.POST("/merge/:fileIds", file_.MergeThenUploadFilesRequestH())
 
 	port := ":8085"
 

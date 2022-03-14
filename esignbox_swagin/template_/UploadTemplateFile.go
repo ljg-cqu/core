@@ -2,10 +2,11 @@ package template_
 
 import (
 	"context"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
-	models2 "github.com/ljg-cqu/core/esignbox_swagin/models/models"
+	"github.com/ljg-cqu/core/esignbox_swagin/models/models"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/ljg-cqu/core/utils"
 	"github.com/long2ice/swagin/router"
@@ -18,6 +19,8 @@ import (
 // https://open.esign.cn/doc/detail?id=opendoc%2Fsaas_api%2Fawgyis&namespace=opendoc%2Fsaas_api
 
 type UploadTemplFileRequest struct {
+	DocType string `uri:"docType" default:"0-合同" description:"文档类型：0-合同, 1-协议, 2-订单."`
+
 	//File *multipart.FileHeader `form:"file" binding:"required" description:"文件名称必须带扩展名:.pdf"`
 }
 
@@ -143,11 +146,13 @@ func (req *UploadTemplFileRequest) Handler(ctx *gin.Context) {
 	// issue a task to sync template upload status
 	// TODO: inert creator info
 
-	_, err = models2.New(common.PgxPool).CreateTemplate(context.Background(), &models2.CreateTemplateParams{
+	_, err = models.New(common.PgxPool).CreateTemplate(context.Background(), &models.CreateTemplateParams{
 		TemplateID:   uploadUrlAndId.TemplateId,
 		TemplateName: fileName,
 		FileSize:     fileSize,
 		FileBody:     fileBytes,
+		CreatorID:    gofakeit.Name(),
+		DocType:      models.DocType(req.DocType),
 	})
 	if err != nil {
 		common.RespErrf(ctx, http.StatusInternalServerError, "failed to create template %q in database for template upload:%v", fileName, err)
@@ -166,7 +171,7 @@ var UploadPDFTemplFileRequestH = func() *router.Router {
 
 	r := router.New(
 		&UploadTemplFileRequest{},
-		router.Summary("模板文件上传. 注意：因UI界面限制，请用Postman、curl或其他工具，通过表单上传模板文件。"),
+		router.Summary("模板文件上传. docType文档类型：0-合同, 1-协议, 2-订单.注意：因UI界面限制，请用Postman、curl或其他工具，通过表单上传模板文件。"),
 		router.Description(apiDesc()),
 		//router.Security(&security.Basic{}),
 		router.ContentType(binding.MIMEMultipartPOSTForm),

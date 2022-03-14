@@ -26,8 +26,11 @@ type GetPdfFileDetailsResponse struct {
 	Data GetPdfFileDetailsResponseData `json:"data" description:"业务信息"`
 }
 
+// todo: deal with doc type correctly
+
 type GetPdfFileDetailsResponseData struct {
 	FileId   string `json:"fileId" default:"ede1fa4504954c29ad210637c15f42cf" description:"文件ID"`
+	DocType  string `json:"docType" default:"0-合同" description:"文档类型：0-合同, 1-协议, 2-订单."`
 	FileName string `json:"name" default:"商贷通用收入证明.pdf" description:"文件名称"`
 	Size     string `json:"size" description:"文件大小，单位byte"`
 	Status   int    `json:"status" description:"文件上传状态: 0-文件未上传；1-文件上传中 ；2-文件上传已完成,；3-文件上传失败 ；4-文件等待转pdf ；5-文件已转换pdf ；6-加水印中；7-加水印完毕；8-文件转换中；9-文件转换失败"`

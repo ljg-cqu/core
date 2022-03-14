@@ -33,6 +33,27 @@ func (e *ComponentType) Scan(src interface{}) error {
 	return nil
 }
 
+type DocType string
+
+const (
+	DocType0 DocType = "0-合同"
+	DocType1 DocType = "1-协议"
+	DocType2 DocType = "2-订单"
+	DocType3 DocType = "3-其他"
+)
+
+func (e *DocType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DocType(s)
+	case string:
+		*e = DocType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DocType: %T", src)
+	}
+	return nil
+}
+
 type FileStatus string
 
 const (
@@ -125,6 +146,7 @@ type AdminAccount struct {
 type ContractFile struct {
 	FileID                string        `json:"fileID"`
 	FileName              string        `json:"fileName"`
+	DocType               DocType       `json:"docType"`
 	TemplateID            string        `json:"templateID"`
 	CreatorID             string        `json:"creatorID"`
 	CreateTime            time.Time     `json:"createTime"`
@@ -140,6 +162,7 @@ type ContractFile struct {
 type ContractTemplate struct {
 	TemplateID            string             `json:"templateID"`
 	TemplateName          string             `json:"templateName"`
+	DocType               DocType            `json:"docType"`
 	CreatorID             string             `json:"creatorID"`
 	CreateTime            time.Time          `json:"createTime"`
 	FileStatus            TemplateFileStatus `json:"fileStatus"`

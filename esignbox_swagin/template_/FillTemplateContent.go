@@ -32,6 +32,7 @@ const (
 //}
 
 type FillTemplateContentRequest struct {
+	DocType          string       `uri:"docType" default:"0-合同" description:"文档类型：0-合同, 1-协议, 2-订单."`
 	TemplateId       string       `form:"templateId" json:"templateId" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"必须。模板id"`
 	FileName         string       `form:"name" json:"name" description:"必须。文件名称，文件名称（必须带上文件扩展名，不然会导致后续发起流程校验过不去.该字段的文件后缀名称和真实的文件后缀需要一致" default:"商贷通用收入证明.pdf"`
 	StrictCheck      bool         `form:"strictCheck" json:"strictCheck" description:"必须。开启simpleFormFields为空校验，默认false，传 false：允许simpleFormFields为空，此时模板中所有待填写字段均为空值；传 true： 当模板中存在必填字段时，不允许simpleFormFields为空，否则会报错" default:"false"`
@@ -177,6 +178,7 @@ func (req *FillTemplateContentRequest) Handler(ctx *gin.Context) {
 		return
 	}
 
+	// todo: norm doc type...
 	_, err = models.New(common.PgxPool).CreateContractFile(context.Background(), &models.CreateContractFileParams{
 		FileID:           parsedResp.Data.FileId,
 		FileName:         parsedResp.Data.FileName,
@@ -184,6 +186,7 @@ func (req *FillTemplateContentRequest) Handler(ctx *gin.Context) {
 		SimpleFormFields: pgtype.JSONB{Bytes: bytes, Status: pgtype.Present},
 		TemplateID:       req.TemplateId,
 		DownloadUrl:      parsedResp.Data.DownloadUrl,
+		DocType:          models.DocType(req.DocType),
 	})
 	if err != nil {
 		common.RespErrf(ctx, http.StatusInternalServerError, "failed to create contract file %q in database for template fill:%v", req.FileName, err)
@@ -235,7 +238,7 @@ var FillTemplateContentRequestH = func() *router.Router {
 	r := router.New(
 		//&req,
 		&FillTemplateContentRequest{},
-		router.Summary("填充内容生成PDF。"),
+		router.Summary("填充内容生成PDF。docType文档类型：0-合同, 1-协议, 2-订单."),
 		router.Description(apiDesc()),
 		//router.Security(&security.Basic{}),
 		router.Responses(router.Response{
