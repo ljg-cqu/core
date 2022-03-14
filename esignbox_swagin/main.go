@@ -22,12 +22,12 @@ const (
 func main() {
 	client := resty.New().SetDebug(true).SetBaseURL(EsignSandBoxHost)
 	common.Client = client
-	common.PgxPool = postgres.PgxPool(postgres.TestDBAliConnStr)
+	common.PgxPool = postgres.PgxPool(postgres.TestDBAliConnStr_)
 
 	//// apply DB migration before Client can work as expected
 	//_, err := common.PgxPool.Exec(context.Background(), models.Schema)
 	//if err != nil {
-	//	log.Printf("failed to to do DB migration for gue queue on top of PostgreSQL:%+v", err)
+	//	log.Printf("failed to to do DB migration for PostgreSQL:%+v", err)
 	//	os.Exit(1)
 	//}
 
