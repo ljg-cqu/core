@@ -50,7 +50,7 @@ func GetOauthInfo() (*OauthInfo, error) {
 	}
 
 	// TODO: consider using refresh token
-	if time.Now().Add(time.Second * 10).After(oauthInfo.ExpiresAt) {
+	if time.Now().Add(time.Second * 60).After(oauthInfo.ExpiresAt) {
 		res, err := _getToken()
 		if err != nil {
 			return nil, err
