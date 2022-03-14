@@ -1,79 +1,79 @@
 -- name: CreateTemplate :one
-INSERT INTO contract_templates (template_id, template_name, doc_type, creator_id, file_size, file_body)
+INSERT INTO esign_templates (template_id, template_name, doc_type, creator_id, file_size, file_body)
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING template_id;
 
 -- name: GetTemplate :one
-SELECT * FROM contract_templates
+SELECT * FROM esign_templates
 WHERE template_id = $1 LIMIT 1;
 
 -- name: GetTemplateCreatorInfo :one
-SELECT * FROM contract_templates
+SELECT * FROM esign_templates
 WHERE template_id = $1 LIMIT 1;
 
 -- name: ListContractTemplateIds :many
-SELECT template_id FROM contract_templates;
+SELECT template_id FROM esign_templates;
 
 -- name: ListContractTemplateIdsByDocType :many
-SELECT template_id FROM contract_templates
+SELECT template_id FROM esign_templates
 WHERE doc_type = $1
 ORDER BY template_name;
 
 -- name: ListContractTemplates :many
-SELECT * FROM contract_templates
+SELECT * FROM esign_templates
 ORDER BY template_name;
 
 -- name: ListContractTemplatesByDocType :many
-SELECT * FROM contract_templates
+SELECT * FROM esign_templates
 WHERE doc_type = $1
 ORDER BY template_name;
 
 -- name: UpdateContractTemplateDownloadUrl :exec
-UPDATE contract_templates SET download_url = $2
+UPDATE esign_templates SET download_url = $2
 WHERE template_id = $1;
 
 -- name: UpdateContractTemplateFileStatus :exec
-UPDATE contract_templates SET file_status = $2
+UPDATE esign_templates SET file_status = $2
 WHERE template_id = $1;
 
 -- name: DeleteContractTemplate :exec
-DELETE FROM contract_templates
+DELETE FROM esign_templates
 WHERE template_id = $1;
 
 
 
 -- name: CreateContractFile :one
-INSERT INTO contract_files (file_id, file_name, doc_type, creator_id, simple_form_fields, template_id, download_url)
+INSERT INTO esign_files (file_id, file_name, doc_type, creator_id, simple_form_fields, template_id, download_url)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING file_id;
 
 -- name: GetContractFile :one
-SELECT * FROM contract_files
+SELECT * FROM esign_files
 WHERE file_id = $1 LIMIT 1;
 
 -- name: ListContractFileIds :many
-SELECT file_id FROM contract_files;
+SELECT file_id FROM esign_files;
 
 -- name: ListContractFileIdsByDocType :many
-SELECT file_id FROM contract_files
+SELECT file_id FROM esign_files
 WHERE doc_type = $1
 ORDER BY file_name;
 
 
 -- name: ListContractFiles :many
-SELECT * FROM contract_files
+SELECT * FROM esign_files
 ORDER BY file_name;
 
 -- name: UpdateContractFileDownloadUrl :exec
-UPDATE contract_files SET download_url = $2
+UPDATE esign_files SET download_url = $2
 WHERE file_id = $1;
 
 -- name: UpdateContractFileFileStatus :exec
-UPDATE contract_files SET file_status = $2
+UPDATE esign_files SET file_status = $2
 WHERE file_id = $1;
 
 -- name: DeleteContractFile :exec
-DELETE FROM contract_files
+DELETE FROM esign_files
 WHERE file_id = $1;
 
 

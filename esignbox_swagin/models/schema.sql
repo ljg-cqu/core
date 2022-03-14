@@ -12,10 +12,10 @@ CREATE TYPE doc_type AS ENUM ('0-合同', '1-协议', '2-订单', '3-其他');
 
 
 -- contract_templatesM todo: rename as templates
-CREATE TABLE IF NOT EXISTS contract_templates
+CREATE TABLE IF NOT EXISTS esign_templates
 (
     template_id VARCHAR(64) PRIMARY KEY,
-    template_name VARCHAR(64) NOT NULL,
+    template_name VARCHAR(128) NOT NULL,
     doc_type doc_type NOT NULL,
     creator_id VARCHAR(64) NOT NULL DEFAULT 'test_account_id',
 
@@ -27,12 +27,12 @@ CREATE TABLE IF NOT EXISTS contract_templates
     file_size BIGINT NOT NULL,
     file_body BYTEA NOT NULL
 );
-CREATE INDEX IF NOT EXISTS "idx_contract_templates_selector" ON "contract_templates" ("template_name");
+CREATE INDEX IF NOT EXISTS "idx_esign_templates_selector" ON "esign_templates" ("template_name");
 
 CREATE TABLE IF NOT EXISTS struct_components
 (
     component_id VARCHAR(64) PRIMARY KEY,
-    template_id VARCHAR(64) NOT NULL REFERENCES contract_templates ON DELETE CASCADE,
+    template_id VARCHAR(64) NOT NULL REFERENCES esign_templates ON DELETE CASCADE,
     component_key VARCHAR(32) NOT NULL,
     component_type component_type NOT NULL,
     component_context JSONB NOT NULL,
@@ -42,7 +42,7 @@ CREATE INDEX IF NOT EXISTS "idx_struct_components_selector" ON "struct_component
 
 
 -- contract tiles todo: rename as files
-CREATE TABLE IF NOT EXISTS contract_files
+CREATE TABLE IF NOT EXISTS esign_files
 (
     file_id VARCHAR(64) PRIMARY KEY,
     file_name VARCHAR(128) NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS contract_files
     simple_form_fields JSONB,
     file_body BYTEA
 );
-CREATE INDEX IF NOT EXISTS "idx_contract_files_selector" ON "contract_files" ("creator_id","file_name", "template_id", "create_time");
+CREATE INDEX IF NOT EXISTS "idx_esign_files_selector" ON "esign_files" ("creator_id","file_name", "template_id", "create_time");
 
 
 

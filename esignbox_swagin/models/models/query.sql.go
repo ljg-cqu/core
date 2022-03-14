@@ -10,7 +10,7 @@ import (
 )
 
 const createContractFile = `-- name: CreateContractFile :one
-INSERT INTO contract_files (file_id, file_name, doc_type, creator_id, simple_form_fields, template_id, download_url)
+INSERT INTO esign_files (file_id, file_name, doc_type, creator_id, simple_form_fields, template_id, download_url)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING file_id
 `
@@ -70,7 +70,7 @@ func (q *Queries) CreateStructComponent(ctx context.Context, arg *CreateStructCo
 }
 
 const createTemplate = `-- name: CreateTemplate :one
-INSERT INTO contract_templates (template_id, template_name, doc_type, creator_id, file_size, file_body)
+INSERT INTO esign_templates (template_id, template_name, doc_type, creator_id, file_size, file_body)
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING template_id
 `
@@ -99,7 +99,7 @@ func (q *Queries) CreateTemplate(ctx context.Context, arg *CreateTemplateParams)
 }
 
 const deleteContractFile = `-- name: DeleteContractFile :exec
-DELETE FROM contract_files
+DELETE FROM esign_files
 WHERE file_id = $1
 `
 
@@ -109,7 +109,7 @@ func (q *Queries) DeleteContractFile(ctx context.Context, fileID string) error {
 }
 
 const deleteContractTemplate = `-- name: DeleteContractTemplate :exec
-DELETE FROM contract_templates
+DELETE FROM esign_templates
 WHERE template_id = $1
 `
 
@@ -129,13 +129,13 @@ func (q *Queries) DeleteStructComponent(ctx context.Context, componentID string)
 }
 
 const getContractFile = `-- name: GetContractFile :one
-SELECT file_id, file_name, doc_type, template_id, creator_id, create_time, file_status, download_url, download_url_expire_time, pdf_total_pages, file_size, simple_form_fields, file_body FROM contract_files
+SELECT file_id, file_name, doc_type, template_id, creator_id, create_time, file_status, download_url, download_url_expire_time, pdf_total_pages, file_size, simple_form_fields, file_body FROM esign_files
 WHERE file_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetContractFile(ctx context.Context, fileID string) (ContractFile, error) {
+func (q *Queries) GetContractFile(ctx context.Context, fileID string) (EsignFile, error) {
 	row := q.db.QueryRow(ctx, getContractFile, fileID)
-	var i ContractFile
+	var i EsignFile
 	err := row.Scan(
 		&i.FileID,
 		&i.FileName,
@@ -206,13 +206,13 @@ func (q *Queries) GetStructComponentsByTemplateId(ctx context.Context, templateI
 }
 
 const getTemplate = `-- name: GetTemplate :one
-SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM contract_templates
+SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM esign_templates
 WHERE template_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetTemplate(ctx context.Context, templateID string) (ContractTemplate, error) {
+func (q *Queries) GetTemplate(ctx context.Context, templateID string) (EsignTemplate, error) {
 	row := q.db.QueryRow(ctx, getTemplate, templateID)
-	var i ContractTemplate
+	var i EsignTemplate
 	err := row.Scan(
 		&i.TemplateID,
 		&i.TemplateName,
@@ -229,13 +229,13 @@ func (q *Queries) GetTemplate(ctx context.Context, templateID string) (ContractT
 }
 
 const getTemplateCreatorInfo = `-- name: GetTemplateCreatorInfo :one
-SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM contract_templates
+SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM esign_templates
 WHERE template_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetTemplateCreatorInfo(ctx context.Context, templateID string) (ContractTemplate, error) {
+func (q *Queries) GetTemplateCreatorInfo(ctx context.Context, templateID string) (EsignTemplate, error) {
 	row := q.db.QueryRow(ctx, getTemplateCreatorInfo, templateID)
-	var i ContractTemplate
+	var i EsignTemplate
 	err := row.Scan(
 		&i.TemplateID,
 		&i.TemplateName,
@@ -252,7 +252,7 @@ func (q *Queries) GetTemplateCreatorInfo(ctx context.Context, templateID string)
 }
 
 const listContractFileIds = `-- name: ListContractFileIds :many
-SELECT file_id FROM contract_files
+SELECT file_id FROM esign_files
 `
 
 func (q *Queries) ListContractFileIds(ctx context.Context) ([]string, error) {
@@ -276,7 +276,7 @@ func (q *Queries) ListContractFileIds(ctx context.Context) ([]string, error) {
 }
 
 const listContractFileIdsByDocType = `-- name: ListContractFileIdsByDocType :many
-SELECT file_id FROM contract_files
+SELECT file_id FROM esign_files
 WHERE doc_type = $1
 ORDER BY file_name
 `
@@ -302,19 +302,19 @@ func (q *Queries) ListContractFileIdsByDocType(ctx context.Context, docType DocT
 }
 
 const listContractFiles = `-- name: ListContractFiles :many
-SELECT file_id, file_name, doc_type, template_id, creator_id, create_time, file_status, download_url, download_url_expire_time, pdf_total_pages, file_size, simple_form_fields, file_body FROM contract_files
+SELECT file_id, file_name, doc_type, template_id, creator_id, create_time, file_status, download_url, download_url_expire_time, pdf_total_pages, file_size, simple_form_fields, file_body FROM esign_files
 ORDER BY file_name
 `
 
-func (q *Queries) ListContractFiles(ctx context.Context) ([]ContractFile, error) {
+func (q *Queries) ListContractFiles(ctx context.Context) ([]EsignFile, error) {
 	rows, err := q.db.Query(ctx, listContractFiles)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ContractFile
+	var items []EsignFile
 	for rows.Next() {
-		var i ContractFile
+		var i EsignFile
 		if err := rows.Scan(
 			&i.FileID,
 			&i.FileName,
@@ -341,7 +341,7 @@ func (q *Queries) ListContractFiles(ctx context.Context) ([]ContractFile, error)
 }
 
 const listContractTemplateIds = `-- name: ListContractTemplateIds :many
-SELECT template_id FROM contract_templates
+SELECT template_id FROM esign_templates
 `
 
 func (q *Queries) ListContractTemplateIds(ctx context.Context) ([]string, error) {
@@ -365,7 +365,7 @@ func (q *Queries) ListContractTemplateIds(ctx context.Context) ([]string, error)
 }
 
 const listContractTemplateIdsByDocType = `-- name: ListContractTemplateIdsByDocType :many
-SELECT template_id FROM contract_templates
+SELECT template_id FROM esign_templates
 WHERE doc_type = $1
 ORDER BY template_name
 `
@@ -391,19 +391,19 @@ func (q *Queries) ListContractTemplateIdsByDocType(ctx context.Context, docType 
 }
 
 const listContractTemplates = `-- name: ListContractTemplates :many
-SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM contract_templates
+SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM esign_templates
 ORDER BY template_name
 `
 
-func (q *Queries) ListContractTemplates(ctx context.Context) ([]ContractTemplate, error) {
+func (q *Queries) ListContractTemplates(ctx context.Context) ([]EsignTemplate, error) {
 	rows, err := q.db.Query(ctx, listContractTemplates)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ContractTemplate
+	var items []EsignTemplate
 	for rows.Next() {
-		var i ContractTemplate
+		var i EsignTemplate
 		if err := rows.Scan(
 			&i.TemplateID,
 			&i.TemplateName,
@@ -427,20 +427,20 @@ func (q *Queries) ListContractTemplates(ctx context.Context) ([]ContractTemplate
 }
 
 const listContractTemplatesByDocType = `-- name: ListContractTemplatesByDocType :many
-SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM contract_templates
+SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM esign_templates
 WHERE doc_type = $1
 ORDER BY template_name
 `
 
-func (q *Queries) ListContractTemplatesByDocType(ctx context.Context, docType DocType) ([]ContractTemplate, error) {
+func (q *Queries) ListContractTemplatesByDocType(ctx context.Context, docType DocType) ([]EsignTemplate, error) {
 	rows, err := q.db.Query(ctx, listContractTemplatesByDocType, docType)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ContractTemplate
+	var items []EsignTemplate
 	for rows.Next() {
-		var i ContractTemplate
+		var i EsignTemplate
 		if err := rows.Scan(
 			&i.TemplateID,
 			&i.TemplateName,
@@ -464,7 +464,7 @@ func (q *Queries) ListContractTemplatesByDocType(ctx context.Context, docType Do
 }
 
 const updateContractFileDownloadUrl = `-- name: UpdateContractFileDownloadUrl :exec
-UPDATE contract_files SET download_url = $2
+UPDATE esign_files SET download_url = $2
 WHERE file_id = $1
 `
 
@@ -479,7 +479,7 @@ func (q *Queries) UpdateContractFileDownloadUrl(ctx context.Context, arg *Update
 }
 
 const updateContractFileFileStatus = `-- name: UpdateContractFileFileStatus :exec
-UPDATE contract_files SET file_status = $2
+UPDATE esign_files SET file_status = $2
 WHERE file_id = $1
 `
 
@@ -494,7 +494,7 @@ func (q *Queries) UpdateContractFileFileStatus(ctx context.Context, arg *UpdateC
 }
 
 const updateContractTemplateDownloadUrl = `-- name: UpdateContractTemplateDownloadUrl :exec
-UPDATE contract_templates SET download_url = $2
+UPDATE esign_templates SET download_url = $2
 WHERE template_id = $1
 `
 
@@ -509,7 +509,7 @@ func (q *Queries) UpdateContractTemplateDownloadUrl(ctx context.Context, arg *Up
 }
 
 const updateContractTemplateFileStatus = `-- name: UpdateContractTemplateFileStatus :exec
-UPDATE contract_templates SET file_status = $2
+UPDATE esign_templates SET file_status = $2
 WHERE template_id = $1
 `
 

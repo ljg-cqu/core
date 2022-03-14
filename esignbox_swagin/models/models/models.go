@@ -81,26 +81,6 @@ func (e *FileStatus) Scan(src interface{}) error {
 	return nil
 }
 
-type OperationType string
-
-const (
-	OperationTypeCreate OperationType = "create"
-	OperationTypeUpdate OperationType = "update"
-	OperationTypeDelete OperationType = "delete"
-)
-
-func (e *OperationType) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = OperationType(s)
-	case string:
-		*e = OperationType(s)
-	default:
-		return fmt.Errorf("unsupported scan type for OperationType: %T", src)
-	}
-	return nil
-}
-
 type TemplateFileStatus string
 
 const (
@@ -122,28 +102,7 @@ func (e *TemplateFileStatus) Scan(src interface{}) error {
 	return nil
 }
 
-type AccountLoginLog struct {
-	LoginID   int32     `json:"loginID"`
-	LoginIp   string    `json:"loginIp"`
-	LoginTime time.Time `json:"loginTime"`
-}
-
-type AccountOperationLog struct {
-	OperationID   int32         `json:"operationID"`
-	AccountID     string        `json:"accountID"`
-	OperationType OperationType `json:"operationType"`
-	OperationTime time.Time     `json:"operationTime"`
-	OperationInfo pgtype.JSONB  `json:"operationInfo"`
-}
-
-type AdminAccount struct {
-	AccountID   int32  `json:"accountID"`
-	AccountName string `json:"accountName"`
-	Password    string `json:"password"`
-	Email       string `json:"email"`
-}
-
-type ContractFile struct {
+type EsignFile struct {
 	FileID                string        `json:"fileID"`
 	FileName              string        `json:"fileName"`
 	DocType               DocType       `json:"docType"`
@@ -159,7 +118,7 @@ type ContractFile struct {
 	FileBody              []byte        `json:"fileBody"`
 }
 
-type ContractTemplate struct {
+type EsignTemplate struct {
 	TemplateID            string             `json:"templateID"`
 	TemplateName          string             `json:"templateName"`
 	DocType               DocType            `json:"docType"`
@@ -170,13 +129,6 @@ type ContractTemplate struct {
 	DownloadUrlExpireTime time.Time          `json:"downloadUrlExpireTime"`
 	FileSize              int64              `json:"fileSize"`
 	FileBody              []byte             `json:"fileBody"`
-}
-
-type CustomerAccount struct {
-	AccountID   int32  `json:"accountID"`
-	AccountName string `json:"accountName"`
-	Password    string `json:"password"`
-	Email       string `json:"email"`
 }
 
 type StructComponent struct {
