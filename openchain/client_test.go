@@ -8,7 +8,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	client := New(logger.NewForDebugStr(), "../tests/configs.json")
+	client := New(logger.New(), "../tests/configs.json")
 	require.NotNil(t, client)
 	fmt.Println(client.CurrentToken)
 }

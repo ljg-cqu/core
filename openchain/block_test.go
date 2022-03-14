@@ -8,7 +8,7 @@ import (
 )
 
 func TestClient_QueryLastBlock(t *testing.T) {
-	client := New(logger.NewForDebugStr(), "../tests/configs.json")
+	client := New(logger.New(), "../tests/configs.json")
 	client.SetDebug(true)
 	require.NotNil(t, client)
 	account, err := client.QueryLastBlock()
