@@ -58,7 +58,7 @@ package utils
 //			return
 //		}
 //
-//		filename := parsedResp.Data.FileName
+//		filename := parsedResp.Data.TemplateName
 //		file, err := os.CreateTemp("", filename)
 //		if err != nil {
 //			return nil, &common.RespObj{

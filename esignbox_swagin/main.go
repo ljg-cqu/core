@@ -1,18 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/file_"
+	"github.com/ljg-cqu/core/esignbox_swagin/models"
 	"github.com/ljg-cqu/core/esignbox_swagin/template_"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/ljg-cqu/core/middleware"
 	"github.com/ljg-cqu/core/postgres"
 	"github.com/long2ice/swagin"
 	"io/ioutil"
+	"log"
+	"os"
 )
 
 const (
@@ -22,14 +26,14 @@ const (
 func main() {
 	client := resty.New().SetDebug(true).SetBaseURL(EsignSandBoxHost)
 	common.Client = client
-	common.PgxPool = postgres.PgxPool(postgres.TestDBAliConnStr_)
+	common.PgxPool = postgres.PgxPool(postgres.TestDBAliConnStr)
 
-	//// apply DB migration before Client can work as expected
-	//_, err := common.PgxPool.Exec(context.Background(), models.Schema)
-	//if err != nil {
-	//	log.Printf("failed to to do DB migration for PostgreSQL:%+v", err)
-	//	os.Exit(1)
-	//}
+	// apply DB migration before Client can work as expected
+	_, err := common.PgxPool.Exec(context.Background(), models.Schema)
+	if err != nil {
+		log.Printf("failed to to do DB migration for PostgreSQL:%+v", err)
+		os.Exit(1)
+	}
 
 	// Use customize Gin engine
 	r := gin.New()
@@ -88,6 +92,8 @@ func main() {
 		//esignTemplate.GET("/officialTemplateInfo", template.GetTemplInfoRequestH())
 		esignTemplate.POST("/details/:templateId", template_.GetTemplDetailsRequestH())
 		esignTemplate.POST("/list/:docType", template_.GetTemplListRequestH())
+
+		esignTemplate.POST("/merge/:templateIds", template_.MergeThenUploadTemplatesRequestH())
 	}
 
 	esignFile := app.Group("/esignFile", swagin.Tags("PDF文件接口（集成e签宝）"))

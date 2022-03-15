@@ -7,8 +7,8 @@ import (
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
 	"github.com/long2ice/swagin/router"
-	"github.com/pkg/errors"
 	"github.com/wI2L/fizz/markdown"
+	"net/http"
 )
 
 const (
@@ -75,6 +75,48 @@ func (req *GetTemplUploadUrlRequest) Handler(ctx *gin.Context) {
 	// TODO: save file to db
 }
 
+func getTemplUploadUrl(fileName, contentMD5 string, contentType string) (data *GetTemplUploadUrlResponseData, errObj *common.RespObj) {
+	type getPDFTemplUploadUrlReq struct {
+		FileName    string `json:"fileName"`
+		ContentMd5  string `json:"contentMd5"`
+		ContentType string `json:"contentType"`
+		Convert2Pdf bool   `json:"convert2Pdf"`
+	}
+
+	parsedResp := GetTemplUploadUrlResponse{}
+	oauth, err := token.GetOauthInfo()
+	if err != nil {
+		return nil, &common.RespObj{Code: http.StatusInternalServerError, Msg: "fail to authenticate for esign"}
+	}
+
+	convert2Pdf := false
+	if contentType != "application/pdf" {
+		convert2Pdf = true
+	}
+
+	req := getPDFTemplUploadUrlReq{
+		FileName:    fileName,
+		ContentMd5:  contentMD5,
+		ContentType: contentType,
+		Convert2Pdf: convert2Pdf,
+	}
+
+	restyResp, err := common.Client.R().SetHeaders(map[string]string{
+		"X-Tsign-Open-App-Id": oauth.AppId,
+		"X-Tsign-Open-Token":  oauth.Token,
+		"Content-Type":        oauth.ContentType,
+	}).SetBody(&req).
+		SetResult(&parsedResp).Post(EsignSandBoxUploadTemplUrl)
+
+	_ = restyResp
+
+	if errObj := common.ErrObjFromEsignRequest(restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}); errObj != nil {
+		return nil, errObj
+	}
+
+	return &GetTemplUploadUrlResponseData{parsedResp.Data.TemplateId, parsedResp.Data.UploadUrl}, nil
+}
+
 var GetTemplUploadUrlRequestH = func() *router.Router {
 	var apiDesc = func() string {
 		builder := markdown.Builder{}
@@ -130,50 +172,4 @@ var GetTemplUploadUrlRequestH = func() *router.Router {
 	)
 
 	return r
-}
-
-func getTemplUploadUrl(fileName, contentMD5 string, contentType string) (*GetTemplUploadUrlResponseData, error) {
-	type getPDFTemplUploadUrlReq struct {
-		FileName    string `json:"fileName"`
-		ContentMd5  string `json:"contentMd5"`
-		ContentType string `json:"contentType"`
-		Convert2Pdf bool   `json:"convert2Pdf"`
-	}
-
-	parsedResp := GetTemplUploadUrlResponse{}
-	oauth, err := token.GetOauthInfo()
-	if err != nil {
-		return nil, err
-	}
-
-	convert2Pdf := false
-	if contentType != "application/pdf" {
-		convert2Pdf = true
-	}
-
-	req := getPDFTemplUploadUrlReq{
-		FileName:    fileName,
-		ContentMd5:  contentMD5,
-		ContentType: contentType,
-		Convert2Pdf: convert2Pdf,
-	}
-
-	restyResp, err := common.Client.R().SetHeaders(map[string]string{
-		"X-Tsign-Open-App-Id": oauth.AppId,
-		"X-Tsign-Open-Token":  oauth.Token,
-		"Content-Type":        oauth.ContentType,
-	}).SetBody(&req).
-		SetResult(&parsedResp).Post(EsignSandBoxUploadTemplUrl)
-
-	_ = restyResp
-
-	if err != nil {
-		return nil, err
-	}
-
-	if parsedResp.Code != 0 {
-		return nil, errors.Errorf("error code:%v, error message:%v", parsedResp.Code, parsedResp.Msg)
-	}
-
-	return &GetTemplUploadUrlResponseData{parsedResp.Data.TemplateId, parsedResp.Data.UploadUrl}, nil
 }

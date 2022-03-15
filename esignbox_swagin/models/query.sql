@@ -40,6 +40,14 @@ WHERE file_id = $1 LIMIT 1;
 -- name: ListFileIds :many
 SELECT file_id FROM esign_files;
 
+-- name: GetTemplateID :one
+SELECT template_id FROM esign_files
+WHERE file_id = $1;
+
+-- name: GetSimpleFormFields :one
+SELECT simple_form_fields FROM esign_files
+WHERE file_id = $1;
+
 -- name: ListFileIdsByDocType :many
 SELECT file_id FROM esign_files
 WHERE doc_type = $1

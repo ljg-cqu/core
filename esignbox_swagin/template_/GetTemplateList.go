@@ -73,7 +73,7 @@ func (req *GetTemplateListRequest) Handler(ctx *gin.Context) {
 	var err error
 	// todo: return type from db
 	if req.DocType == "" {
-		contractTemplIds, err = queries.ListContractTemplateIds(context.Background())
+		contractTemplIds, err = queries.ListTemplateIds(context.Background())
 		if err != nil {
 			common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract template ids from db, error:%v", err)
 			return
@@ -84,7 +84,7 @@ func (req *GetTemplateListRequest) Handler(ctx *gin.Context) {
 			return
 		}
 	} else {
-		contractTemplIds, err = queries.ListContractTemplateIdsByDocType(context.Background(), models.DocType(req.DocType))
+		contractTemplIds, err = queries.ListTemplateIdsByDocType(context.Background(), models.DocType(req.DocType))
 		if err != nil {
 			common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract template ids from db, error:%v", err)
 			return
@@ -103,7 +103,7 @@ func (req *GetTemplateListRequest) Handler(ctx *gin.Context) {
 		}
 		detail, errObj := GetTemplDetails(contractTemplId)
 		if errObj != nil {
-			common.RespErrObj(ctx, errObj)
+			common.RespErrObj(ctx, errObj) // todo: continue
 			return
 		}
 		templDetailsList = append(templDetailsList, GetTemplateListResponseData_{

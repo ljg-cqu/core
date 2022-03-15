@@ -5,6 +5,7 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/jackc/pgtype"
 	"github.com/ljg-cqu/core/esignbox_swagin/common"
 	"github.com/ljg-cqu/core/esignbox_swagin/models/models"
 	"github.com/ljg-cqu/core/esignbox_swagin/token"
@@ -114,9 +115,9 @@ func (req *UploadTemplFileRequest) Handler(ctx *gin.Context) {
 		contentType = "application/octet-stream"
 	}
 
-	uploadUrlAndId, err := getTemplUploadUrl(fileName, contentMD5, contentType)
-	if err != nil {
-		common.RespErrf(ctx, http.StatusInternalServerError, "got and error when request template upload url for %q:%v", fileName, err)
+	uploadUrlAndId, errObj := getTemplUploadUrl(fileName, contentMD5, contentType)
+	if errObj != nil {
+		common.RespErrObj(ctx, errObj)
 		return
 	}
 
@@ -146,16 +147,19 @@ func (req *UploadTemplFileRequest) Handler(ctx *gin.Context) {
 	// issue a task to sync template upload status
 	// TODO: inert creator info
 
-	_, err = models.New(common.PgxPool).CreateTemplate(context.Background(), &models.CreateTemplateParams{
-		TemplateID:   uploadUrlAndId.TemplateId,
-		TemplateName: fileName,
-		FileSize:     fileSize,
-		FileBody:     fileBytes,
-		CreatorID:    gofakeit.Name(),
-		DocType:      models.DocType(req.DocType),
-	})
+	createTemplateParams := &models.CreateTemplateParams{
+		TemplateID:        uploadUrlAndId.TemplateId,
+		TemplateName:      fileName,
+		DocType:           models.DocType(req.DocType),
+		ParentTemplateIds: []string{}, // todo:
+		CreatorID:         gofakeit.Name(),
+		StructComponents:  pgtype.JSONB{Bytes: []byte(""), Status: pgtype.Null}, // todo
+		FileSize:          fileSize,
+		FileBody:          fileBytes,
+	}
+	_, err = models.New(common.PgxPool).CreateTemplate(context.Background(), createTemplateParams)
 	if err != nil {
-		common.RespErrf(ctx, http.StatusInternalServerError, "failed to create template %q in database for template upload:%v", fileName, err)
+		common.RespErrf(ctx, http.StatusInternalServerError, "failed to save template info %q for template upload:%v", fileName, err)
 		return
 	}
 

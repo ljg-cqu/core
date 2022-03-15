@@ -8,6 +8,7 @@ import (
 	"github.com/cockroachdb/cockroach-go/v2/testserver"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -83,4 +84,11 @@ LIMIT 1 FOR UPDATE SKIP LOCKED`, queue, now).Scan(
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+}
+
+func TestPgxPool_(t *testing.T) {
+	pool := PgxPool(TestDBAliConnStr)
+
+	_, err := pool.Exec(context.Background(), "DELETE FROM esign_templates WHERE template_id = ''")
+	require.Nil(t, t, err)
 }

@@ -13,7 +13,7 @@ import (
 // https://open.esign.cn/doc/detail?id=opendoc%2Fsaas_api%2Fyingmd&namespace=opendoc%2Fsaas_api
 
 type GetPdfFileDetailsListRequest struct {
-	//FileId string `uri:"fileId" binding:"required" default:"ede1fa4504954c29ad210637c15f42cf" description:"文件ID"`
+	//TemplateId string `uri:"fileId" binding:"required" default:"ede1fa4504954c29ad210637c15f42cf" description:"文件ID"`
 	DocType string `uri:"docType" default:"0-合同" description:"文档类型：0-合同, 1-协议, 2-订单. 若不指定，将返回所有模板列表"`
 }
 
@@ -23,8 +23,10 @@ func (req *GetPdfFileDetailsListRequest) Handler(ctx *gin.Context) {
 	var contractFileIds []string
 	var err error
 
+	// todo: improve this with map,ok
+
 	if req.DocType == "" {
-		contractFileIds, err = queries.ListContractFileIds(context.Background())
+		contractFileIds, err = queries.ListFileIds(context.Background())
 		if err != nil {
 			common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract file ids from db, error:%v", err)
 			return
@@ -36,7 +38,7 @@ func (req *GetPdfFileDetailsListRequest) Handler(ctx *gin.Context) {
 			return
 		}
 	} else {
-		contractFileIds, err = queries.ListContractFileIdsByDocType(context.Background(), models.DocType(req.DocType))
+		contractFileIds, err = queries.ListFileIdsByDocType(context.Background(), models.DocType(req.DocType))
 		if err != nil {
 			common.RespErrf(ctx, http.StatusInternalServerError, "failed to query contract file ids from db, error:%v", err)
 			return
@@ -56,8 +58,9 @@ func (req *GetPdfFileDetailsListRequest) Handler(ctx *gin.Context) {
 		}
 		detail, errObj := GetPdfFileDetails(contractFileId)
 		if errObj != nil {
-			common.RespErrObj(ctx, errObj)
-			return
+			continue // todo: improve this stratagy
+			//common.RespErrObj(ctx, errObj)
+			//return
 		}
 		fileDetailsList = append(fileDetailsList, *detail)
 	}

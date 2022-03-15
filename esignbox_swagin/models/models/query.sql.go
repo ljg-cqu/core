@@ -120,6 +120,18 @@ func (q *Queries) GetFile(ctx context.Context, fileID string) (EsignFile, error)
 	return i, err
 }
 
+const getSimpleFormFields = `-- name: GetSimpleFormFields :one
+SELECT simple_form_fields FROM esign_files
+WHERE file_id = $1
+`
+
+func (q *Queries) GetSimpleFormFields(ctx context.Context, fileID string) (pgtype.JSONB, error) {
+	row := q.db.QueryRow(ctx, getSimpleFormFields, fileID)
+	var simple_form_fields pgtype.JSONB
+	err := row.Scan(&simple_form_fields)
+	return simple_form_fields, err
+}
+
 const getTemplate = `-- name: GetTemplate :one
 SELECT template_id, template_name, doc_type, parent_template_ids, creator_id, create_time, struct_components, file_size, file_body FROM esign_templates
 WHERE template_id = $1 LIMIT 1
@@ -140,6 +152,18 @@ func (q *Queries) GetTemplate(ctx context.Context, templateID string) (EsignTemp
 		&i.FileBody,
 	)
 	return i, err
+}
+
+const getTemplateID = `-- name: GetTemplateID :one
+SELECT template_id FROM esign_files
+WHERE file_id = $1
+`
+
+func (q *Queries) GetTemplateID(ctx context.Context, fileID string) (string, error) {
+	row := q.db.QueryRow(ctx, getTemplateID, fileID)
+	var template_id string
+	err := row.Scan(&template_id)
+	return template_id, err
 }
 
 const listFileIds = `-- name: ListFileIds :many

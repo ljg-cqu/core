@@ -43,7 +43,7 @@ type UploadFileRequest struct {
 }
 
 type UploadFileResponseData struct {
-	FileId   string `json:"FileId" binding:"required" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"文件ID."`
+	FileId   string `json:"TemplateId" binding:"required" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"文件ID."`
 	FileName string `json:"fileName" binding:"required" default:"商贷通用收入证明.pdf" description:"文件名称，必须带扩展名."`
 }
 
@@ -132,7 +132,7 @@ func (req *UploadFileRequest) Handler(ctx *gin.Context) {
 	//}
 
 	//_, err = models.New(common.PgxPool).CreateContractFile(context.Background(), &models.CreateContractFileParams{
-	//	FileID:    uploadUrlAndId.FileId,
+	//	FileID:    uploadUrlAndId.TemplateId,
 	//	FileName:  fileName,
 	//	CreatorID: gofakeit.UUID(),
 	//	FileSize:  fileSize,

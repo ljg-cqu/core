@@ -3,6 +3,7 @@ package template_
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
@@ -26,7 +27,7 @@ const (
 
 //type FillTemplateContentRequest struct {
 //	TemplateId       string       `form:"templateId" binding:"required" json:"templateId" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板id"`
-//	FileName         string       `form:"name" binding:"required" json:"name" description:"文件名称，文件名称（必须带上文件扩展名，不然会导致后续发起流程校验过不去.该字段的文件后缀名称和真实的文件后缀需要一致" default:"商贷通用收入证明.pdf"`
+//	TemplateName         string       `form:"name" binding:"required" json:"name" description:"文件名称，文件名称（必须带上文件扩展名，不然会导致后续发起流程校验过不去.该字段的文件后缀名称和真实的文件后缀需要一致" default:"商贷通用收入证明.pdf"`
 //	StrictCheck      bool         `form:"strictCheck" json:"strictCheck" description:"开启simpleFormFields为空校验，默认false，传 false：允许simpleFormFields为空，此时模板中所有待填写字段均为空值；传 true： 当模板中存在必填字段时，不允许simpleFormFields为空，否则会报错" default:"false"`
 //	SimpleFormFields []FieldValue `form:"simpleFormFields" binding:"required" json:"simpleFormFields" description:"输入项填充内容，key:value 传入；可使用输入项组件id+填充内容，也可使用输入项组件key+填充内容方式填充.注意：E签宝官网获取的模板id，在通过模板创建文件的时候只支持输入项组件id+填充内容.如何进行图片控件填充:https://open.esign.cn/doc/detail?id=opendoc%2Fsaas_api%2Fzwlv9n&namespace=opendoc%2Fsaas_api"` // todo:check object type
 //}
@@ -41,7 +42,7 @@ type FillTemplateContentRequest struct {
 
 //type FillTemplateContentRequest struct {
 //	TemplateId       string       `binding:"required" json:"templateId" default:"c4d4fe1b48184ba28982f68bf2c7bf25" description:"模板id"`
-//	FileName         string       `binding:"required" json:"name" description:"文件名称，文件名称（必须带上文件扩展名，不然会导致后续发起流程校验过不去.该字段的文件后缀名称和真实的文件后缀需要一致" default:"商贷通用收入证明.pdf"`
+//	TemplateName         string       `binding:"required" json:"name" description:"文件名称，文件名称（必须带上文件扩展名，不然会导致后续发起流程校验过不去.该字段的文件后缀名称和真实的文件后缀需要一致" default:"商贷通用收入证明.pdf"`
 //	StrictCheck      bool         `json:"strictCheck" description:"开启simpleFormFields为空校验，默认false，传 false：允许simpleFormFields为空，此时模板中所有待填写字段均为空值；传 true： 当模板中存在必填字段时，不允许simpleFormFields为空，否则会报错" default:"false"`
 //	SimpleFormFields []FieldValue `binding:"required" json:"simpleFormFields" description:"输入项填充内容，key:value 传入；可使用输入项组件id+填充内容，也可使用输入项组件key+填充内容方式填充.注意：E签宝官网获取的模板id，在通过模板创建文件的时候只支持输入项组件id+填充内容.如何进行图片控件填充:https://open.esign.cn/doc/detail?id=opendoc%2Fsaas_api%2Fzwlv9n&namespace=opendoc%2Fsaas_api"` // todo:check object type
 //}
@@ -51,7 +52,8 @@ type FieldValue struct {
 	Value string `form:"value" json:"value" binding:"required" default:"zealy"`
 }
 
-type _FillTemplateContentRequest struct {
+type FillTemplateContentRequest_ struct {
+	DocType          string            `uri:"docType"`
 	TemplateId       string            `json:"templateId"`
 	FileName         string            `json:"name"`
 	StrictCheck      bool              `json:"strictCheck"`
@@ -118,82 +120,81 @@ type FillTemplateContentResponseData struct {
 	DownloadUrl string `json:"downloadUrl" description:"模板文件下载链接，有效期60分钟"`
 }
 
-/*
-{
-   "code": 0,
-   "message": "成功",
-   "data": {
-      "fileId": "ede1fa4504954c29ad210637c15f42cf",
-      "fileName": "商贷通用收入证明.pdf",
-      "downloadUrl": "https://esignoss.esign.cn/1111564182/f33c1c35-e47e-451d-b9b9-0855d682ea79/%E5%95%86%E8%B4%B7%E9%80%9A%E7%94%A8%E6%94%B6%E5%85%A5%E8%AF%81%E6%98%8E.pdf?Expires=1646233196&OSSAccessKeyId=LTAI4G23YViiKnxTC28ygQzF&Signature=fpguS0x08KbyJ3xOfPaujARK010%3D"
-   }
-}
-
-{
-   "code": 0,
-   "message": "成功",
-   "data": {
-      "fileId": "3d35e0bf3ce94a48a28dec72d9d7487e",
-      "fileName": "商贷通用收入证明.pdf",
-      "downloadUrl": "https://esignoss.esign.cn/1111564182/66023c56-d607-4e1c-b640-7bfcbac8e125/%E5%95%86%E8%B4%B7%E9%80%9A%E7%94%A8%E6%94%B6%E5%85%A5%E8%AF%81%E6%98%8E.pdf?Expires=1646233451&OSSAccessKeyId=LTAI4G23YViiKnxTC28ygQzF&Signature=5Em9r04LkArUfK8nzymo71dmpaA%3D"
-   }
-}
-
-
-*/
-
 func (req *FillTemplateContentRequest) Handler(ctx *gin.Context) {
-	parsedResp := FillTemplateContentResponse{}
-	oauth, err := token.GetOauthInfo()
-	if err != nil {
-		common.RespErrf(ctx, http.StatusInternalServerError, "got an error for esign authentication:%v", err)
-		return
-	}
 
 	var fieldValues = make(map[string]string)
 	for _, fieldValue := range req.SimpleFormFields {
 		fieldValues[fieldValue.Field] = fieldValue.Value
 	}
 
-	_req := _FillTemplateContentRequest{}
+	_req := FillTemplateContentRequest_{}
+	_req.DocType = req.DocType
 	_req.TemplateId = req.TemplateId
 	_req.StrictCheck = req.StrictCheck
 	_req.FileName = req.FileName
 	_req.SimpleFormFields = fieldValues
 
+	result, errObj := FillTemplateContent(&_req)
+	if errObj != nil {
+		common.RespErrObj(ctx, errObj)
+		return
+	}
+
+	common.RespSucc(ctx, result)
+}
+
+func FillTemplateContent(params *FillTemplateContentRequest_) (data *FillTemplateContentResponseData, errObj *common.RespObj) {
+	oauth, err := token.GetOauthInfo()
+	if err != nil {
+		return nil, &common.RespObj{
+			Code: http.StatusInternalServerError,
+			Msg:  fmt.Sprintf("got an error for esign authentication:%v", err),
+		}
+	}
+
+	parsedResp := FillTemplateContentResponse{}
 	restyResp, err := common.Client.R().SetHeaders(map[string]string{
 		"X-Tsign-Open-App-Id": oauth.AppId,
 		"X-Tsign-Open-Token":  oauth.Token,
 		"Content-Type":        oauth.ContentType,
-	}).SetBody(&_req).
+	}).SetBody(&params).
 		SetResult(&parsedResp).Post(EsignSandBoxFillTemplateContentUrl)
 
-	if common.RespErre(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
-		return
+	if errObj := common.ErrObjFromEsignRequest(restyResp.RawResponse, err, &common.EsignError{
+		Code: parsedResp.Code,
+		Msg:  parsedResp.Msg,
+	}); errObj != nil {
+		return nil, errObj
 	}
 
-	bytes, err := json.Marshal(req.SimpleFormFields)
+	bytes, err := json.Marshal(params.SimpleFormFields)
 	if err != nil {
-		common.RespErrf(ctx, http.StatusInternalServerError, "failed to marshal simple form fields for %q:%v", req.FileName, err)
-		return
+		return nil, &common.RespObj{
+			Code: http.StatusInternalServerError,
+			Msg:  fmt.Sprintf("failed to marshal simple form fields for %q:%v", params.FileName, err),
+		}
 	}
 
 	// todo: norm doc type...
-	_, err = models.New(common.PgxPool).CreateContractFile(context.Background(), &models.CreateContractFileParams{
+	_, err = models.New(common.PgxPool).CreateFile(context.Background(), &models.CreateFileParams{
 		FileID:           parsedResp.Data.FileId,
 		FileName:         parsedResp.Data.FileName,
+		DocType:          models.DocType(params.DocType),
+		TemplateID:       params.TemplateId,
+		ParentFileIds:    []string{},      // todo
 		CreatorID:        gofakeit.UUID(), // todo: use true account
 		SimpleFormFields: pgtype.JSONB{Bytes: bytes, Status: pgtype.Present},
-		TemplateID:       req.TemplateId,
-		DownloadUrl:      parsedResp.Data.DownloadUrl,
-		DocType:          models.DocType(req.DocType),
+		FileSize:         0,        // todo
+		FileBody:         []byte{}, // todo
 	})
 	if err != nil {
-		common.RespErrf(ctx, http.StatusInternalServerError, "failed to create contract file %q in database for template fill:%v", req.FileName, err)
-		return
+		return nil, &common.RespObj{
+			Code: http.StatusInternalServerError,
+			Msg:  fmt.Sprintf("failed to create contract file %q in database for template fill:%v", params.FileName, err),
+		}
 	}
 
-	common.RespSucc(ctx, parsedResp.Data)
+	return &parsedResp.Data, nil
 }
 
 var FillTemplateContentRequestH = func() *router.Router {

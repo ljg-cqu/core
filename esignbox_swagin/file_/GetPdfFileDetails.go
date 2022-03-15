@@ -51,7 +51,7 @@ func (req *GetPdfFileDetailsRequest) Handler(ctx *gin.Context) {
 	//	"X-Tsign-Open-App-Id": oauth.AppId,
 	//	"X-Tsign-Open-Token":  oauth.Token,
 	//	"Content-Type":        oauth.ContentType,
-	//}).SetResult(&parsedResp).Get("/v1/files/" + req.FileId)
+	//}).SetResult(&parsedResp).Get("/v1/files/" + req.TemplateId)
 	//
 	//if common.RespErre(ctx, restyResp.RawResponse, err, &common.EsignError{Code: parsedResp.Code, Msg: parsedResp.Msg}) {
 	//	return
