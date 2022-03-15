@@ -8,7 +8,7 @@ CREATE TYPE component_type AS ENUM ('1-单行文本', '2-数字', '3-日期', '6
 CREATE TYPE doc_type AS ENUM ('0-合同', '1-协议', '2-订单', '3-其他');
 
 
--- contract_templates
+-- templates
 CREATE TABLE IF NOT EXISTS esign_templates
 (
     template_id VARCHAR(64) PRIMARY KEY,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS esign_templates
 CREATE INDEX IF NOT EXISTS "idx_esign_templates_selector" ON "esign_templates" ("creator_id","template_name","create_time");
 
 
--- contract tiles
+-- files
 CREATE TABLE IF NOT EXISTS esign_files
 (
     file_id VARCHAR(64) PRIMARY KEY,
