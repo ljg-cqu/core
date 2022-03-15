@@ -9,79 +9,56 @@ import (
 	"github.com/jackc/pgtype"
 )
 
-const createContractFile = `-- name: CreateContractFile :one
-INSERT INTO esign_files (file_id, file_name, doc_type, creator_id, simple_form_fields, template_id, download_url)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+const createFile = `-- name: CreateFile :one
+INSERT INTO esign_files (file_id, file_name, doc_type, template_id, parent_file_ids, creator_id, simple_form_fields, file_size, file_body)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING file_id
 `
 
-type CreateContractFileParams struct {
+type CreateFileParams struct {
 	FileID           string       `json:"fileID"`
 	FileName         string       `json:"fileName"`
 	DocType          DocType      `json:"docType"`
+	TemplateID       string       `json:"templateID"`
+	ParentFileIds    []string     `json:"parentFileIds"`
 	CreatorID        string       `json:"creatorID"`
 	SimpleFormFields pgtype.JSONB `json:"simpleFormFields"`
-	TemplateID       string       `json:"templateID"`
-	DownloadUrl      string       `json:"downloadUrl"`
+	FileSize         int64        `json:"fileSize"`
+	FileBody         []byte       `json:"fileBody"`
 }
 
-func (q *Queries) CreateContractFile(ctx context.Context, arg *CreateContractFileParams) (string, error) {
-	row := q.db.QueryRow(ctx, createContractFile,
+func (q *Queries) CreateFile(ctx context.Context, arg *CreateFileParams) (string, error) {
+	row := q.db.QueryRow(ctx, createFile,
 		arg.FileID,
 		arg.FileName,
 		arg.DocType,
+		arg.TemplateID,
+		arg.ParentFileIds,
 		arg.CreatorID,
 		arg.SimpleFormFields,
-		arg.TemplateID,
-		arg.DownloadUrl,
+		arg.FileSize,
+		arg.FileBody,
 	)
 	var file_id string
 	err := row.Scan(&file_id)
 	return file_id, err
 }
 
-const createStructComponent = `-- name: CreateStructComponent :one
-INSERT INTO struct_components (component_id, template_id, component_key, component_type, component_context, allow_edit)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING component_id
-`
-
-type CreateStructComponentParams struct {
-	ComponentID      string        `json:"componentID"`
-	TemplateID       string        `json:"templateID"`
-	ComponentKey     string        `json:"componentKey"`
-	ComponentType    ComponentType `json:"componentType"`
-	ComponentContext pgtype.JSONB  `json:"componentContext"`
-	AllowEdit        bool          `json:"allowEdit"`
-}
-
-func (q *Queries) CreateStructComponent(ctx context.Context, arg *CreateStructComponentParams) (string, error) {
-	row := q.db.QueryRow(ctx, createStructComponent,
-		arg.ComponentID,
-		arg.TemplateID,
-		arg.ComponentKey,
-		arg.ComponentType,
-		arg.ComponentContext,
-		arg.AllowEdit,
-	)
-	var component_id string
-	err := row.Scan(&component_id)
-	return component_id, err
-}
-
 const createTemplate = `-- name: CreateTemplate :one
-INSERT INTO esign_templates (template_id, template_name, doc_type, creator_id, file_size, file_body)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO esign_templates (template_id, template_name, doc_type, parent_template_ids, creator_id, struct_components, file_size, file_body)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING template_id
 `
 
 type CreateTemplateParams struct {
-	TemplateID   string  `json:"templateID"`
-	TemplateName string  `json:"templateName"`
-	DocType      DocType `json:"docType"`
-	CreatorID    string  `json:"creatorID"`
-	FileSize     int64   `json:"fileSize"`
-	FileBody     []byte  `json:"fileBody"`
+	TemplateID        string       `json:"templateID"`
+	TemplateName      string       `json:"templateName"`
+	DocType           DocType      `json:"docType"`
+	ParentTemplateIds []string     `json:"parentTemplateIds"`
+	CreatorID         string       `json:"creatorID"`
+	StructComponents  pgtype.JSONB `json:"structComponents"`
+	FileSize          int64        `json:"fileSize"`
+	FileBody          []byte       `json:"fileBody"`
 }
 
 func (q *Queries) CreateTemplate(ctx context.Context, arg *CreateTemplateParams) (string, error) {
@@ -89,7 +66,9 @@ func (q *Queries) CreateTemplate(ctx context.Context, arg *CreateTemplateParams)
 		arg.TemplateID,
 		arg.TemplateName,
 		arg.DocType,
+		arg.ParentTemplateIds,
 		arg.CreatorID,
+		arg.StructComponents,
 		arg.FileSize,
 		arg.FileBody,
 	)
@@ -98,115 +77,51 @@ func (q *Queries) CreateTemplate(ctx context.Context, arg *CreateTemplateParams)
 	return template_id, err
 }
 
-const deleteContractFile = `-- name: DeleteContractFile :exec
+const deleteFile = `-- name: DeleteFile :exec
 DELETE FROM esign_files
 WHERE file_id = $1
 `
 
-func (q *Queries) DeleteContractFile(ctx context.Context, fileID string) error {
-	_, err := q.db.Exec(ctx, deleteContractFile, fileID)
+func (q *Queries) DeleteFile(ctx context.Context, fileID string) error {
+	_, err := q.db.Exec(ctx, deleteFile, fileID)
 	return err
 }
 
-const deleteContractTemplate = `-- name: DeleteContractTemplate :exec
+const deleteTemplate = `-- name: DeleteTemplate :exec
 DELETE FROM esign_templates
 WHERE template_id = $1
 `
 
-func (q *Queries) DeleteContractTemplate(ctx context.Context, templateID string) error {
-	_, err := q.db.Exec(ctx, deleteContractTemplate, templateID)
+func (q *Queries) DeleteTemplate(ctx context.Context, templateID string) error {
+	_, err := q.db.Exec(ctx, deleteTemplate, templateID)
 	return err
 }
 
-const deleteStructComponent = `-- name: DeleteStructComponent :exec
-DELETE FROM struct_components
-WHERE component_id = $1
-`
-
-func (q *Queries) DeleteStructComponent(ctx context.Context, componentID string) error {
-	_, err := q.db.Exec(ctx, deleteStructComponent, componentID)
-	return err
-}
-
-const getContractFile = `-- name: GetContractFile :one
-SELECT file_id, file_name, doc_type, template_id, creator_id, create_time, file_status, download_url, download_url_expire_time, pdf_total_pages, file_size, simple_form_fields, file_body FROM esign_files
+const getFile = `-- name: GetFile :one
+SELECT file_id, file_name, doc_type, template_id, parent_file_ids, creator_id, create_time, simple_form_fields, file_size, file_body FROM esign_files
 WHERE file_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetContractFile(ctx context.Context, fileID string) (EsignFile, error) {
-	row := q.db.QueryRow(ctx, getContractFile, fileID)
+func (q *Queries) GetFile(ctx context.Context, fileID string) (EsignFile, error) {
+	row := q.db.QueryRow(ctx, getFile, fileID)
 	var i EsignFile
 	err := row.Scan(
 		&i.FileID,
 		&i.FileName,
 		&i.DocType,
 		&i.TemplateID,
+		&i.ParentFileIds,
 		&i.CreatorID,
 		&i.CreateTime,
-		&i.FileStatus,
-		&i.DownloadUrl,
-		&i.DownloadUrlExpireTime,
-		&i.PdfTotalPages,
-		&i.FileSize,
 		&i.SimpleFormFields,
+		&i.FileSize,
 		&i.FileBody,
 	)
 	return i, err
 }
 
-const getStructComponent = `-- name: GetStructComponent :one
-SELECT component_id, template_id, component_key, component_type, component_context, allow_edit FROM struct_components
-WHERE component_id = $1 LIMIT 1
-`
-
-func (q *Queries) GetStructComponent(ctx context.Context, componentID string) (StructComponent, error) {
-	row := q.db.QueryRow(ctx, getStructComponent, componentID)
-	var i StructComponent
-	err := row.Scan(
-		&i.ComponentID,
-		&i.TemplateID,
-		&i.ComponentKey,
-		&i.ComponentType,
-		&i.ComponentContext,
-		&i.AllowEdit,
-	)
-	return i, err
-}
-
-const getStructComponentsByTemplateId = `-- name: GetStructComponentsByTemplateId :many
-SELECT component_id, template_id, component_key, component_type, component_context, allow_edit FROM struct_components
-WHERE template_id = $1
-`
-
-func (q *Queries) GetStructComponentsByTemplateId(ctx context.Context, templateID string) ([]StructComponent, error) {
-	rows, err := q.db.Query(ctx, getStructComponentsByTemplateId, templateID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []StructComponent
-	for rows.Next() {
-		var i StructComponent
-		if err := rows.Scan(
-			&i.ComponentID,
-			&i.TemplateID,
-			&i.ComponentKey,
-			&i.ComponentType,
-			&i.ComponentContext,
-			&i.AllowEdit,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getTemplate = `-- name: GetTemplate :one
-SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM esign_templates
+SELECT template_id, template_name, doc_type, parent_template_ids, creator_id, create_time, struct_components, file_size, file_body FROM esign_templates
 WHERE template_id = $1 LIMIT 1
 `
 
@@ -217,46 +132,22 @@ func (q *Queries) GetTemplate(ctx context.Context, templateID string) (EsignTemp
 		&i.TemplateID,
 		&i.TemplateName,
 		&i.DocType,
+		&i.ParentTemplateIds,
 		&i.CreatorID,
 		&i.CreateTime,
-		&i.FileStatus,
-		&i.DownloadUrl,
-		&i.DownloadUrlExpireTime,
+		&i.StructComponents,
 		&i.FileSize,
 		&i.FileBody,
 	)
 	return i, err
 }
 
-const getTemplateCreatorInfo = `-- name: GetTemplateCreatorInfo :one
-SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM esign_templates
-WHERE template_id = $1 LIMIT 1
-`
-
-func (q *Queries) GetTemplateCreatorInfo(ctx context.Context, templateID string) (EsignTemplate, error) {
-	row := q.db.QueryRow(ctx, getTemplateCreatorInfo, templateID)
-	var i EsignTemplate
-	err := row.Scan(
-		&i.TemplateID,
-		&i.TemplateName,
-		&i.DocType,
-		&i.CreatorID,
-		&i.CreateTime,
-		&i.FileStatus,
-		&i.DownloadUrl,
-		&i.DownloadUrlExpireTime,
-		&i.FileSize,
-		&i.FileBody,
-	)
-	return i, err
-}
-
-const listContractFileIds = `-- name: ListContractFileIds :many
+const listFileIds = `-- name: ListFileIds :many
 SELECT file_id FROM esign_files
 `
 
-func (q *Queries) ListContractFileIds(ctx context.Context) ([]string, error) {
-	rows, err := q.db.Query(ctx, listContractFileIds)
+func (q *Queries) ListFileIds(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listFileIds)
 	if err != nil {
 		return nil, err
 	}
@@ -275,14 +166,14 @@ func (q *Queries) ListContractFileIds(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
-const listContractFileIdsByDocType = `-- name: ListContractFileIdsByDocType :many
+const listFileIdsByDocType = `-- name: ListFileIdsByDocType :many
 SELECT file_id FROM esign_files
 WHERE doc_type = $1
 ORDER BY file_name
 `
 
-func (q *Queries) ListContractFileIdsByDocType(ctx context.Context, docType DocType) ([]string, error) {
-	rows, err := q.db.Query(ctx, listContractFileIdsByDocType, docType)
+func (q *Queries) ListFileIdsByDocType(ctx context.Context, docType DocType) ([]string, error) {
+	rows, err := q.db.Query(ctx, listFileIdsByDocType, docType)
 	if err != nil {
 		return nil, err
 	}
@@ -301,13 +192,13 @@ func (q *Queries) ListContractFileIdsByDocType(ctx context.Context, docType DocT
 	return items, nil
 }
 
-const listContractFiles = `-- name: ListContractFiles :many
-SELECT file_id, file_name, doc_type, template_id, creator_id, create_time, file_status, download_url, download_url_expire_time, pdf_total_pages, file_size, simple_form_fields, file_body FROM esign_files
+const listFiles = `-- name: ListFiles :many
+SELECT file_id, file_name, doc_type, template_id, parent_file_ids, creator_id, create_time, simple_form_fields, file_size, file_body FROM esign_files
 ORDER BY file_name
 `
 
-func (q *Queries) ListContractFiles(ctx context.Context) ([]EsignFile, error) {
-	rows, err := q.db.Query(ctx, listContractFiles)
+func (q *Queries) ListFiles(ctx context.Context) ([]EsignFile, error) {
+	rows, err := q.db.Query(ctx, listFiles)
 	if err != nil {
 		return nil, err
 	}
@@ -320,14 +211,11 @@ func (q *Queries) ListContractFiles(ctx context.Context) ([]EsignFile, error) {
 			&i.FileName,
 			&i.DocType,
 			&i.TemplateID,
+			&i.ParentFileIds,
 			&i.CreatorID,
 			&i.CreateTime,
-			&i.FileStatus,
-			&i.DownloadUrl,
-			&i.DownloadUrlExpireTime,
-			&i.PdfTotalPages,
-			&i.FileSize,
 			&i.SimpleFormFields,
+			&i.FileSize,
 			&i.FileBody,
 		); err != nil {
 			return nil, err
@@ -340,12 +228,12 @@ func (q *Queries) ListContractFiles(ctx context.Context) ([]EsignFile, error) {
 	return items, nil
 }
 
-const listContractTemplateIds = `-- name: ListContractTemplateIds :many
+const listTemplateIds = `-- name: ListTemplateIds :many
 SELECT template_id FROM esign_templates
 `
 
-func (q *Queries) ListContractTemplateIds(ctx context.Context) ([]string, error) {
-	rows, err := q.db.Query(ctx, listContractTemplateIds)
+func (q *Queries) ListTemplateIds(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listTemplateIds)
 	if err != nil {
 		return nil, err
 	}
@@ -364,14 +252,13 @@ func (q *Queries) ListContractTemplateIds(ctx context.Context) ([]string, error)
 	return items, nil
 }
 
-const listContractTemplateIdsByDocType = `-- name: ListContractTemplateIdsByDocType :many
+const listTemplateIdsByDocType = `-- name: ListTemplateIdsByDocType :many
 SELECT template_id FROM esign_templates
 WHERE doc_type = $1
-ORDER BY template_name
 `
 
-func (q *Queries) ListContractTemplateIdsByDocType(ctx context.Context, docType DocType) ([]string, error) {
-	rows, err := q.db.Query(ctx, listContractTemplateIdsByDocType, docType)
+func (q *Queries) ListTemplateIdsByDocType(ctx context.Context, docType DocType) ([]string, error) {
+	rows, err := q.db.Query(ctx, listTemplateIdsByDocType, docType)
 	if err != nil {
 		return nil, err
 	}
@@ -390,13 +277,13 @@ func (q *Queries) ListContractTemplateIdsByDocType(ctx context.Context, docType 
 	return items, nil
 }
 
-const listContractTemplates = `-- name: ListContractTemplates :many
-SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM esign_templates
+const listTemplates = `-- name: ListTemplates :many
+SELECT template_id, template_name, doc_type, parent_template_ids, creator_id, create_time, struct_components, file_size, file_body FROM esign_templates
 ORDER BY template_name
 `
 
-func (q *Queries) ListContractTemplates(ctx context.Context) ([]EsignTemplate, error) {
-	rows, err := q.db.Query(ctx, listContractTemplates)
+func (q *Queries) ListTemplates(ctx context.Context) ([]EsignTemplate, error) {
+	rows, err := q.db.Query(ctx, listTemplates)
 	if err != nil {
 		return nil, err
 	}
@@ -408,11 +295,10 @@ func (q *Queries) ListContractTemplates(ctx context.Context) ([]EsignTemplate, e
 			&i.TemplateID,
 			&i.TemplateName,
 			&i.DocType,
+			&i.ParentTemplateIds,
 			&i.CreatorID,
 			&i.CreateTime,
-			&i.FileStatus,
-			&i.DownloadUrl,
-			&i.DownloadUrlExpireTime,
+			&i.StructComponents,
 			&i.FileSize,
 			&i.FileBody,
 		); err != nil {
@@ -426,14 +312,14 @@ func (q *Queries) ListContractTemplates(ctx context.Context) ([]EsignTemplate, e
 	return items, nil
 }
 
-const listContractTemplatesByDocType = `-- name: ListContractTemplatesByDocType :many
-SELECT template_id, template_name, doc_type, creator_id, create_time, file_status, download_url, download_url_expire_time, file_size, file_body FROM esign_templates
+const listTemplatesByDocType = `-- name: ListTemplatesByDocType :many
+SELECT template_id, template_name, doc_type, parent_template_ids, creator_id, create_time, struct_components, file_size, file_body FROM esign_templates
 WHERE doc_type = $1
 ORDER BY template_name
 `
 
-func (q *Queries) ListContractTemplatesByDocType(ctx context.Context, docType DocType) ([]EsignTemplate, error) {
-	rows, err := q.db.Query(ctx, listContractTemplatesByDocType, docType)
+func (q *Queries) ListTemplatesByDocType(ctx context.Context, docType DocType) ([]EsignTemplate, error) {
+	rows, err := q.db.Query(ctx, listTemplatesByDocType, docType)
 	if err != nil {
 		return nil, err
 	}
@@ -445,11 +331,10 @@ func (q *Queries) ListContractTemplatesByDocType(ctx context.Context, docType Do
 			&i.TemplateID,
 			&i.TemplateName,
 			&i.DocType,
+			&i.ParentTemplateIds,
 			&i.CreatorID,
 			&i.CreateTime,
-			&i.FileStatus,
-			&i.DownloadUrl,
-			&i.DownloadUrlExpireTime,
+			&i.StructComponents,
 			&i.FileSize,
 			&i.FileBody,
 		); err != nil {
@@ -461,80 +346,4 @@ func (q *Queries) ListContractTemplatesByDocType(ctx context.Context, docType Do
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateContractFileDownloadUrl = `-- name: UpdateContractFileDownloadUrl :exec
-UPDATE esign_files SET download_url = $2
-WHERE file_id = $1
-`
-
-type UpdateContractFileDownloadUrlParams struct {
-	FileID      string `json:"fileID"`
-	DownloadUrl string `json:"downloadUrl"`
-}
-
-func (q *Queries) UpdateContractFileDownloadUrl(ctx context.Context, arg *UpdateContractFileDownloadUrlParams) error {
-	_, err := q.db.Exec(ctx, updateContractFileDownloadUrl, arg.FileID, arg.DownloadUrl)
-	return err
-}
-
-const updateContractFileFileStatus = `-- name: UpdateContractFileFileStatus :exec
-UPDATE esign_files SET file_status = $2
-WHERE file_id = $1
-`
-
-type UpdateContractFileFileStatusParams struct {
-	FileID     string     `json:"fileID"`
-	FileStatus FileStatus `json:"fileStatus"`
-}
-
-func (q *Queries) UpdateContractFileFileStatus(ctx context.Context, arg *UpdateContractFileFileStatusParams) error {
-	_, err := q.db.Exec(ctx, updateContractFileFileStatus, arg.FileID, arg.FileStatus)
-	return err
-}
-
-const updateContractTemplateDownloadUrl = `-- name: UpdateContractTemplateDownloadUrl :exec
-UPDATE esign_templates SET download_url = $2
-WHERE template_id = $1
-`
-
-type UpdateContractTemplateDownloadUrlParams struct {
-	TemplateID  string `json:"templateID"`
-	DownloadUrl string `json:"downloadUrl"`
-}
-
-func (q *Queries) UpdateContractTemplateDownloadUrl(ctx context.Context, arg *UpdateContractTemplateDownloadUrlParams) error {
-	_, err := q.db.Exec(ctx, updateContractTemplateDownloadUrl, arg.TemplateID, arg.DownloadUrl)
-	return err
-}
-
-const updateContractTemplateFileStatus = `-- name: UpdateContractTemplateFileStatus :exec
-UPDATE esign_templates SET file_status = $2
-WHERE template_id = $1
-`
-
-type UpdateContractTemplateFileStatusParams struct {
-	TemplateID string             `json:"templateID"`
-	FileStatus TemplateFileStatus `json:"fileStatus"`
-}
-
-func (q *Queries) UpdateContractTemplateFileStatus(ctx context.Context, arg *UpdateContractTemplateFileStatusParams) error {
-	_, err := q.db.Exec(ctx, updateContractTemplateFileStatus, arg.TemplateID, arg.FileStatus)
-	return err
-}
-
-const updateStructComponent = `-- name: UpdateStructComponent :exec
-UPDATE struct_components SET (component_key, component_context) = ($2, $3)
-WHERE component_id = $1
-`
-
-type UpdateStructComponentParams struct {
-	ComponentID      string       `json:"componentID"`
-	ComponentKey     string       `json:"componentKey"`
-	ComponentContext pgtype.JSONB `json:"componentContext"`
-}
-
-func (q *Queries) UpdateStructComponent(ctx context.Context, arg *UpdateStructComponentParams) error {
-	_, err := q.db.Exec(ctx, updateStructComponent, arg.ComponentID, arg.ComponentKey, arg.ComponentContext)
-	return err
 }

@@ -3,7 +3,6 @@
 package models
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -54,88 +53,27 @@ func (e *DocType) Scan(src interface{}) error {
 	return nil
 }
 
-type FileStatus string
-
-const (
-	FileStatus0    FileStatus = "0-文件未上传"
-	FileStatus1    FileStatus = "1-文件上传中"
-	FileStatus2    FileStatus = "2-文件上传已完成"
-	FileStatus3    FileStatus = "3-文件上传失败"
-	FileStatus4Pdf FileStatus = "4-文件等待转pdf"
-	FileStatus5Pdf FileStatus = "5-文件已转换pdf"
-	FileStatus6    FileStatus = "6-加水印中"
-	FileStatus7    FileStatus = "7-加水印完毕"
-	FileStatus8    FileStatus = "8-文件转换中"
-	FileStatus9    FileStatus = "9-文件转换失败"
-)
-
-func (e *FileStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = FileStatus(s)
-	case string:
-		*e = FileStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for FileStatus: %T", src)
-	}
-	return nil
-}
-
-type TemplateFileStatus string
-
-const (
-	TemplateFileStatus0    TemplateFileStatus = "0-未上传"
-	TemplateFileStatus1PDF TemplateFileStatus = "1-未转换成PDF"
-	TemplateFileStatus2    TemplateFileStatus = "2-已上传成功"
-	TemplateFileStatus3PDF TemplateFileStatus = "3-已转换成PDF"
-)
-
-func (e *TemplateFileStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = TemplateFileStatus(s)
-	case string:
-		*e = TemplateFileStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for TemplateFileStatus: %T", src)
-	}
-	return nil
-}
-
 type EsignFile struct {
-	FileID                string        `json:"fileID"`
-	FileName              string        `json:"fileName"`
-	DocType               DocType       `json:"docType"`
-	TemplateID            string        `json:"templateID"`
-	CreatorID             string        `json:"creatorID"`
-	CreateTime            time.Time     `json:"createTime"`
-	FileStatus            FileStatus    `json:"fileStatus"`
-	DownloadUrl           string        `json:"downloadUrl"`
-	DownloadUrlExpireTime time.Time     `json:"downloadUrlExpireTime"`
-	PdfTotalPages         sql.NullInt32 `json:"pdfTotalPages"`
-	FileSize              sql.NullInt64 `json:"fileSize"`
-	SimpleFormFields      pgtype.JSONB  `json:"simpleFormFields"`
-	FileBody              []byte        `json:"fileBody"`
+	FileID           string       `json:"fileID"`
+	FileName         string       `json:"fileName"`
+	DocType          DocType      `json:"docType"`
+	TemplateID       string       `json:"templateID"`
+	ParentFileIds    []string     `json:"parentFileIds"`
+	CreatorID        string       `json:"creatorID"`
+	CreateTime       time.Time    `json:"createTime"`
+	SimpleFormFields pgtype.JSONB `json:"simpleFormFields"`
+	FileSize         int64        `json:"fileSize"`
+	FileBody         []byte       `json:"fileBody"`
 }
 
 type EsignTemplate struct {
-	TemplateID            string             `json:"templateID"`
-	TemplateName          string             `json:"templateName"`
-	DocType               DocType            `json:"docType"`
-	CreatorID             string             `json:"creatorID"`
-	CreateTime            time.Time          `json:"createTime"`
-	FileStatus            TemplateFileStatus `json:"fileStatus"`
-	DownloadUrl           string             `json:"downloadUrl"`
-	DownloadUrlExpireTime time.Time          `json:"downloadUrlExpireTime"`
-	FileSize              int64              `json:"fileSize"`
-	FileBody              []byte             `json:"fileBody"`
-}
-
-type StructComponent struct {
-	ComponentID      string        `json:"componentID"`
-	TemplateID       string        `json:"templateID"`
-	ComponentKey     string        `json:"componentKey"`
-	ComponentType    ComponentType `json:"componentType"`
-	ComponentContext pgtype.JSONB  `json:"componentContext"`
-	AllowEdit        bool          `json:"allowEdit"`
+	TemplateID        string       `json:"templateID"`
+	TemplateName      string       `json:"templateName"`
+	DocType           DocType      `json:"docType"`
+	ParentTemplateIds []string     `json:"parentTemplateIds"`
+	CreatorID         string       `json:"creatorID"`
+	CreateTime        time.Time    `json:"createTime"`
+	StructComponents  pgtype.JSONB `json:"structComponents"`
+	FileSize          int64        `json:"fileSize"`
+	FileBody          []byte       `json:"fileBody"`
 }
