@@ -48,7 +48,7 @@ func WriteError(ctx *gin.Context, code int, msg string) {
 func WriteErrorf(ctx *gin.Context, code int, format string, values ...interface{}) {
 	ctx.JSON(http.StatusBadRequest, ErrorResp{
 		Code: code,
-		Msg:  fmt.Sprintf(format, values),
+		Msg:  fmt.Sprintf(format, values...),
 	})
 }
 
@@ -105,7 +105,7 @@ func RespErrObj(c *gin.Context, errObj *RespObj) {
 func RespErrf(c *gin.Context, code int, format string, values ...interface{}) {
 	resp(c, &RespObj{
 		Code: code,
-		Msg:  fmt.Sprintf(format, values),
+		Msg:  fmt.Sprintf(format, values...),
 	})
 }
 
