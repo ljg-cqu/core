@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	mail "github.com/xhit/go-simple-mail/v2"
-	"os"
 	"errors"
 	"time"
 )
@@ -14,7 +13,7 @@ import (
 const (
 	connectTimeout = 60 * time.Second
 	sendTimeout    = 60 * time.Second
-	keepAlive      = true // keep it alive for sending multiple emails
+	keepAlive      = false // keep it alive for sending multiple emails
 	helo           = "localhost"
 
 	encryptionType = mail.EncryptionSTARTTLS
