@@ -7,13 +7,14 @@ import (
 	"fmt"
 	mail "github.com/xhit/go-simple-mail/v2"
 	"os"
+	"errors"
 	"time"
 )
 
 const (
-	connectTimeout = 10 * time.Second
-	sendTimeout    = 10 * time.Second
-	keepAlive      = false // keep it alive for sending multiple emails
+	connectTimeout = 60 * time.Second
+	sendTimeout    = 60 * time.Second
+	keepAlive      = true // keep it alive for sending multiple emails
 	helo           = "localhost"
 
 	encryptionType = mail.EncryptionSTARTTLS
@@ -41,7 +42,7 @@ type EmailClient struct {
 	client *mail.SMTPClient
 }
 
-func NewEmailClient(prvd Provider, tlsConfig *tls.Config, userName, password string) *EmailClient {
+func NewEmailClient(prvd Provider, tlsConfig *tls.Config, userName, password string) (*EmailClient,error) {
 	srv := mail.NewSMTPClient()
 
 	srv.Host = providerConfigs[prvd].host
@@ -61,11 +62,10 @@ func NewEmailClient(prvd Provider, tlsConfig *tls.Config, userName, password str
 
 	cli, err := srv.Connect()
 	if err != nil || cli.Noop() != nil {
-		fmt.Printf("Failed to connect stmp server %q, error: %v", srv.Host, err)
-		os.Exit(1)
+		return nil, errors.New(fmt.Sprintf("Failed to connect stmp server %q, error: %v", srv.Host, err))
 	}
 
-	return &EmailClient{cli}
+	return &EmailClient{cli},nil
 }
 
 func (e *EmailClient) Send(msg *mail.Email) error {
