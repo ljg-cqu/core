@@ -29,7 +29,7 @@ type Provider int
 
 var providerConfigs = map[Provider]providerConfig{
 	NetEase126Mail: {"smtp.126.com", 25},
-	QQMail:         {"smtp.qq.com", 465}, // TODO: or port as 587
+	QQMail:         {"smtp.qq.com", 587}, // TODO: or port as 465
 }
 
 type providerConfig struct {
