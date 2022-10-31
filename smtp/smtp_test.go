@@ -17,6 +17,7 @@ func TestNewNetEaseSMTPClient(t *testing.T) {
 func TestNetEaseSMTPClient_Send(t *testing.T) {
 	cli, err := NewEmailClient(NetEase126Mail, &tls.Config{InsecureSkipVerify: true}, "ljg_cqu@126.com", "UPVZLTEGBSNPGXCI")
 	require.NotNil(t, err)
+	require.NotNil(t, cli)
 
 	const htmlBody = `<html>
 	<head>
@@ -50,6 +51,7 @@ func TestNewQQMailSMTPClient(t *testing.T) {
 func TestQQMailSMTPClient_Send(t *testing.T) {
 	cli, err := NewEmailClient(QQMail, &tls.Config{InsecureSkipVerify: true}, "1025003548@qq.com", "ncoajiivbenpbfbh")
 	require.NotNil(t, err)
+	require.NotNil(t, cli)
 
 	const htmlBody = `<html>
 	<head>
