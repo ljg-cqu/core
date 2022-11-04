@@ -22,6 +22,7 @@ const (
 
 const (
 	NetEase126Mail Provider = iota
+	NetEase163Mail
 	QQMail
 )
 
@@ -29,6 +30,7 @@ type Provider int
 
 var providerConfigs = map[Provider]providerConfig{
 	NetEase126Mail: {"smtp.126.com", 25},
+	NetEase163Mail: {"smtp.163.com", 25}, // SSL: 465
 	QQMail:         {"smtp.qq.com", 587}, // TODO: or port as 465
 }
 
